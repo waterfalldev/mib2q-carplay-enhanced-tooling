@@ -32,10 +32,10 @@ against unchanged upstream application runtime code.
 
 | Branch | Current commit | Files | Added / deleted against review base |
 |---|---|---:|---:|
-| `upstream/build-portability` | `3e7fad14e23316e80b955f22dbca065f196a4395` | 21 | 702 / 351 |
-| `upstream/native-guidance-restoration` | `1e5e592c1f5a41bbf9db7db0866d975fd1f08beb` | 8 | 468 / 18 |
-| `upstream/most-support` | `9e723f000634cab19dfc6037be6233bf7af52eaf` | 39 | 5,819 / 69 |
-| `review/shared-renderer-performance` | `eae889df5ee3d85b7e98a1c3e352321f5bbec286` | 12 | 1,250 / 116 |
+| `upstream/build-portability` | `326b904098dbec1e33b2aca6e8c923d2dbb95499` | 22 | 711 / 352 |
+| `upstream/native-guidance-restoration` | `bcd550169a90f4dc917f787ff1ce8a8751b53407` | 8 | 468 / 18 |
+| `upstream/most-support` | `6f1e69b38146c4c497106394c6176f19e31a10e6` | 39 | 5,819 / 69 |
+| `review/shared-renderer-performance` | `f45c4d24a312994f1187a2a2d8faa308daf4cf05` | 12 | 1,250 / 116 |
 
 The MOST branch uses the existing renderer loop and mask painting, with the
 MOST-specific 1x/FXAA path and the same-size fallback fix. It includes the current
@@ -48,6 +48,15 @@ the entire existing runtime unchanged, including the shared performance work.
 - The combined portability branch builds both native artifacts and the Java JAR
   from an application-only export. All 35 Java suites and stock linkage pass,
   along with the native/shell checks and restored M.I.B. tests.
+- A cleanup pass verified Luka's existing MU1316 layout and preserved his public
+  entry points. The direct Java build-regression command now uses that default
+  layout, with a dedicated fixture checking the documented invocation. Java
+  tests default to two concurrent JVMs, and line-ending rules cover shell
+  scripts only. An unused Java inspection action was removed. The host-test
+  Dockerfile remains app-owned because this tooling repository builds from it.
+  The cleanup's last application commit only changes README documentation;
+  its preceding commit `82b25a2f84f72fb629914ca8f8a74a248939abd2` passed the
+  complete native, Java, shell and build-regression run.
 - The reordered guidance branch passes all 38 Java suites, including the three
   guidance regressions, plus stock linkage and native/shell checks. Its complete
   tree matches the previously validated portability/restoration/Java stack.

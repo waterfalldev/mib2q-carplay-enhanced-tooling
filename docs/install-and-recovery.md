@@ -13,7 +13,7 @@ application README. Docker supplies Java 8 for compilation, class inspection and
 tests; no host JDK is required. Prepare the host-test image in the application checkout:
 
 ```sh
-docker build -t carplay-rgi-host-tests:local -f tests/Dockerfile.host .
+docker build --platform linux/amd64 -t carplay-rgi-host-tests:local -f tests/Dockerfile.host .
 ```
 
 Keep these directories outside both repositories:

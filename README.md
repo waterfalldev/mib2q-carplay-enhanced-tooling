@@ -14,7 +14,7 @@ Use PowerShell 7, Git (including Git Bash on Windows), Docker, a built
 `qnx65-armv7-toolchain:latest` image and the application's host-test image:
 
 ```sh
-docker build -t carplay-rgi-host-tests:local -f tests/Dockerfile.host .
+docker build --platform linux/amd64 -t carplay-rgi-host-tests:local -f tests/Dockerfile.host .
 ```
 
 Run that image preparation command in the application checkout. Prepare external
