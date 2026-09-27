@@ -284,9 +284,8 @@ Acceptance is a working clean-commit build from both repositories, an independen
 
 | Contribution | Starting evidence | Include | Exclude / gate |
 |---|---|---|---|
-| Native-guidance restoration fixes | `a99ad32`, `79136a7`, `5b34a89` | Fail-safe takeover release, reopening/replay of native guidance, restoring latest native state, focused regression tests | Packaging replacement and MOST renderer changes; preserve explicit limits such as not resuming a route already cancelled by REPLACE mode |
-| Small build/test portability fixes | `6998acb`, `2418f34` | Linux host checks, LF handling, Windows Docker native builds | Full PowerShell packaging dependency |
-| Cross-platform Java build/test workflow (separate PR) | Selected changes from `8226e17`, `15f166a` and relevant later corrections | Configurable external stock inputs, Docker-based Java tests replacing hard-coded host JDK paths, shared compilation/tests and stable JAR output, with existing shell entry points and upstream defaults retained | Tooling orchestration and PowerShell-only adapter fixes; record actual host validation and do not hide a substantial Java workflow replacement inside the small native portability PR |
+| Combined native and Java build/test portability | `6998acb`, `2418f34`, selected changes from `8226e17`, `15f166a` and later corrections | Linux host checks, LF handling, Windows Docker native builds, configurable external stock inputs, Docker-based Java tests replacing hard-coded host JDK paths, shared compilation/tests and stable JAR output, with existing shell entry points and upstream defaults retained | Application runtime changes, tooling orchestration and PowerShell-only adapter fixes; record actual host validation. Native and Java work share the first PR at the user's request. |
+| Native-guidance restoration fixes | `a99ad32`, `79136a7`, `5b34a89` | Fail-safe takeover release, reopening/replay of native guidance, restoring latest native state, focused regression tests and their shared-runner registrations | Packaging replacement and MOST renderer changes; preserve explicit limits such as not resuming a route already cancelled by REPLACE mode |
 | MOST/non-FPK support | `46c5ac6`, `7d074ad`, later required fixes and current feature documentation | Coding-based selection, view ownership/handshake, native output geometry, KOMO text, current MOST-specific behavior and relevant tests | Custom packaging; unvalidated claims about other cluster types; shared renderer changes must be reviewed separately below |
 | Individual upstream installer fixes | Findings demonstrated against the restored original scripts | Small, independently tested changes for error propagation, mount cleanup or permissions where warranted | Wholesale managed installer adoption, firmware-profile policy, archive framework and unrelated diagnostic collection |
 
@@ -307,9 +306,10 @@ All full PowerShell packaging, custom deployment templates, firmware profile han
 - [x] Recompute the upstream line accounting.
 - [x] Prepare focused upstream contribution branches and their validation notes.
 
-The application's `main` has been fast-forwarded to the validated
-`extract-rgi-tooling` commit `186baf76c50c05a633b4ee28aee33f01b182ec50`; its original
-`non-fpk-support` branch is preserved. The extraction diff against the original upstream baseline is now
+The application's `main` has been fast-forwarded to the validated extraction
+commit `186baf76c50c05a633b4ee28aee33f01b182ec50`. The redundant extraction,
+`non-fpk-support` and local `improvements` branch names have since been removed,
+with their commits preserved in `main`. The extraction diff against the original upstream baseline is now
 73 files, 8,317 additions and 636 deletions. The runtime source and runtime tests
 are unchanged by extraction. The existing workspace command forwards to this
 repository. Publication destinations are the user's application fork and
