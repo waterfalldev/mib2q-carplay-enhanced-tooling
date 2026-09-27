@@ -1,0 +1,14 @@
+/Firmware/
+/Dependencies/
+/Work/
+/Packages/
+/Logs/
+/build/
+**/Firmware.psd1
+**/lsd.jar
+*.jxe
+*.core
+*.log
+**/carplay-rgi-runtime-logs/
+.DS_Store
+__pycache__/

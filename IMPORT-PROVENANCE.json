@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/waterfalldev/mib2q-carplay-rgi-nonfpk",
+  "commit": "237ded9a3249dba395f7ac11968ad43440c6f31d",
+  "paths": ["packaging/", "deploy/mib/", "docs/deploy/install.md"],
+  "workspaceLauncher": "Build/Prepare-CarPlayRGI.ps1",
+  "note": "Initial import preserves the original packaging and deployment source. Subsequent commits decouple application and tooling revisions. Firmware and generated packages are not included."
+}
