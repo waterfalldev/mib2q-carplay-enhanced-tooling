@@ -1,6 +1,9 @@
 # Separate application code from local packaging tools
 
-Prepared 27 September 2026. Status: repository cloned and migration planned; file extraction and build changes have not been implemented.
+Prepared 27 September 2026; implemented locally on the same date. The design and
+starting-point accounting below are retained as the migration record. Packaging
+now lives here, the application workflow is restored, and focused local
+contribution branches are prepared. See [contribution scopes and validation](docs/upstream-contributions.md).
 
 ## Outcome and scope
 
@@ -294,13 +297,19 @@ All full PowerShell packaging, custom deployment templates, firmware profile han
 
 - [x] Clone `waterfalldev/mib2q-rgi-tooling` into the requested `Repositories` folder.
 - [x] Inspect application dependencies and current package evidence; record this plan.
-- [ ] Import the exact tooling files and document their origin.
-- [ ] Implement and commit independent application/tooling source selection.
-- [ ] Validate the extracted builder against the original pinned application.
-- [ ] Restore upstream installation bundles and tests in the application.
-- [ ] Remove application-owned copies and update the local compatibility launcher.
-- [ ] Validate the post-cutover application/tooling commit pair and recovery fixtures.
-- [ ] Recompute the upstream line accounting.
-- [ ] Prepare focused upstream contribution branches and their validation notes.
+- [x] Import the exact tooling files and document their origin.
+- [x] Implement and commit independent application/tooling source selection.
+- [x] Validate the extracted builder against the original pinned application.
+- [x] Restore upstream installation bundles and tests in the application.
+- [x] Remove application-owned copies and update the local compatibility launcher.
+- [x] Validate the post-cutover application/tooling commit pair and recovery fixtures.
+- [x] Recompute the upstream line accounting.
+- [x] Prepare focused upstream contribution branches and their validation notes.
 
-Planning has not moved application files, changed installer behavior, committed or pushed the plan, or opened any PRs.
+The application is on `extract-rgi-tooling`; its original `non-fpk-support` branch
+is preserved. The extraction diff against the original upstream baseline is now
+73 files, 8,317 additions and 636 deletions. The runtime source and runtime tests
+are unchanged by extraction. The existing workspace command forwards to this
+repository. All work is committed locally; no repositories have been pushed and
+no PRs have been opened. Detailed local build evidence and package comparisons
+are stored outside both repositories under `Build/Validation/ToolingMigration`.
