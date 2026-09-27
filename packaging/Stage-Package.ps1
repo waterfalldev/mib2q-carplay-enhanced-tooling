@@ -226,11 +226,12 @@ MU=$FirmwareName
     ) + @($StateDestination)
 
     $DeploymentPlan = [ordered]@{
-        schemaVersion = 2
+        schemaVersion = 3
         purpose = 'authoritative file plan used to generate the guarded car-side installer'
         releaseTag = $Tag
-        sourceLabel = $Tag
+        sourceLabel = $SourceLabel
         commit = $Commit
+        toolingCommit = $ToolingCommit
         supportsManagedUpdate = $true
         files = $InstallFilePlan
         stateFile = $StateDestination
@@ -256,7 +257,9 @@ MU=$FirmwareName
         -Content (($DeploymentPlan | ConvertTo-Json -Depth 10) + "`n")
 
     $RollbackPlan = [ordered]@{
-        schemaVersion = 2
+        schemaVersion = 3
+        commit = $Commit
+        toolingCommit = $ToolingCommit
         scope = "owned $FirmwareName CarPlay-RGI installation, including interrupted first install"
         entryPoint = 'installer/rollback.sh'
         ownershipMarker = '/mnt/app/root/carplay-rgi-backup/owner-marker.txt'
@@ -521,7 +524,7 @@ without the exact installer-owned marker and valid on-unit backups.
     Copy-Item `
         -LiteralPath $PackagedCommandPath `
         -Destination (Join-Path $SdRoot 'mod/custom.sh')
-    Copy-Item -LiteralPath (Join-Path $WorkTree 'deploy/mib/entry.sh') -Destination $MibCommandPath
+    Copy-Item -LiteralPath (Join-Path $ToolingRoot 'deploy/mib/entry.sh') -Destination $MibCommandPath
 
     $SdBackupDirectory = Join-Path $SdRoot 'mod\carplay-rgi-backup'
     New-Item -ItemType Directory -Force -Path $SdBackupDirectory | Out-Null

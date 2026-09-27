@@ -1,6 +1,8 @@
 #requires -version 7.0
 param(
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
+    # Optional previous managed package, used only in isolated upgrade fixtures.
+    [string]$PreviousPackageDirectory = '',
     [switch]$DispatcherOnly,
     # Optional source overlay in temporary fixtures only, for testing future builds.
     [string]$CollectorScript = '',
@@ -102,11 +104,11 @@ mkdir() {
 '@
     WriteText $destination ($text.Replace("#!/bin/sh`n", "#!/bin/sh`n$mock`necho `"collect `$0 `${1:-}`" >> '$p/trace.txt'`n"))
 }
-function Fixture($name) {
+function Fixture($name, $packageSource = $PackageDirectory) {
     $root = Join-Path $testRoot $name
     $sd = Join-Path $root 'sd'
     New-Item -ItemType Directory -Path $sd | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PackageDirectory 'sdcard\mod') -Destination $sd -Recurse
+    Copy-Item -LiteralPath (Join-Path $packageSource 'sdcard\mod') -Destination $sd -Recurse
     if ($DispatcherScript) {
         WriteText (Join-Path $sd 'mod/command.sh') ([IO.File]::ReadAllText($DispatcherScript))
     }
@@ -197,6 +199,30 @@ $normalBody = {
     $root = Fixture 'normal'
     Assert ((Run $root 'install') -eq 0) 'first install succeeds'
     Assert ((Run $root 'install') -eq 0) 'managed reinstall succeeds'
+    Recovered $root
+}
+
+$previousPackageBody = {
+    param($interrupted)
+    $name = if ($interrupted) { 'previous-interrupted' } else { 'previous-upgrade' }
+    $root = Fixture $name $PreviousPackageDirectory
+    Assert ((Run $root 'install') -eq 0) 'previous managed package installs'
+    $oldState = Get-Content -Raw -LiteralPath (Join-Path $root 'app/root/hooks/carplay_rgi_install.state')
+    $incoming = Fixture ($name + '-incoming')
+    Copy-Item -LiteralPath (Join-Path $incoming 'sd/mod') -Destination (Join-Path $root 'sd') -Recurse -Force
+    foreach ($action in @('install','rollback')) {
+        $text = [IO.File]::ReadAllText((Join-Path $incoming "$action.sh"))
+        WriteText (Join-Path $root "$action.sh") ($text.Replace((Posix $incoming),(Posix $root)))
+    }
+    if ($interrupted) {
+        Assert ((Run $root 'install' 'FAIL_MV=6') -ne 0) 'interrupted cross-package update reports failure'
+        Assert ((Get-Content -Raw -LiteralPath (Join-Path $root 'app/root/hooks/carplay_rgi_install.state')) -ceq $oldState) 'interrupted update retains previous state'
+    } else {
+        Assert ((Run $root 'install') -eq 0) 'new package upgrades the previous managed package'
+        $expectedState = Get-FileHash -LiteralPath (Join-Path $root 'sd/mod/carplay-rgi/installer/install-state.txt')
+        $actualState = Get-FileHash -LiteralPath (Join-Path $root 'app/root/hooks/carplay_rgi_install.state')
+        Assert ($expectedState.Hash -ceq $actualState.Hash) 'upgrade records the incoming package state'
+    }
     Recovered $root
 }
 
@@ -712,6 +738,10 @@ function Add-Unit([string]$Name, [scriptblock]$Body, $Argument = $null, [int]$Ph
 }
 if (-not $DispatcherOnly) {
     Add-Unit 'normal' $normalBody
+    if ($PreviousPackageDirectory) {
+        Add-Unit 'previous-package-upgrade' $previousPackageBody $false
+        Add-Unit 'previous-package-interrupted' $previousPackageBody $true
+    }
     foreach ($case in @('shader-cache','shader-cache-foreign','shader-cache-stuck')) { Add-Unit $case $shaderCacheBody $case }
     foreach ($case in @('upgrade','interrupted-upgrade','unowned-monitor')) { Add-Unit $case $monitorUpgradeBody $case }
     foreach ($fault in @('FAIL_SYNC=1','FAIL_CP=1')) { Add-Unit $fault.Replace('=','-') $installFaultBody $fault }
@@ -761,6 +791,7 @@ function Quote-Literal([string]$Text) { "'" + $Text.Replace("'", "''") + "'" }
 $unitCall = '& ' + (Quote-Literal $PSCommandPath) + ' -PackageDirectory ' + (Quote-Literal $PackageDirectory) +
     ' -TestRoot ' + (Quote-Literal $testRoot) + ' -TestRootParent ' + (Quote-Literal $TestRootParent)
 if ($DispatcherOnly) { $unitCall += ' -DispatcherOnly' }
+if ($PreviousPackageDirectory) { $unitCall += ' -PreviousPackageDirectory ' + (Quote-Literal $PreviousPackageDirectory) }
 if ($CollectorScript) { $unitCall += ' -CollectorScript ' + (Quote-Literal $CollectorScript) }
 if ($DispatcherScript) { $unitCall += ' -DispatcherScript ' + (Quote-Literal $DispatcherScript) }
 New-Item -ItemType Directory -Force -Path $testRoot | Out-Null

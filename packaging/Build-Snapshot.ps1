@@ -2,6 +2,9 @@
 # Internal entry point. Build-Package.ps1 exports an exact commit before calling this.
 [CmdletBinding()]
 param(
+    [Parameter(Mandatory=$true)][string]$SourceRoot,
+    [Parameter(Mandatory=$true)][string]$ToolingRoot,
+    [Parameter(Mandatory=$true)][ValidatePattern('^[0-9a-f]{40}$')][string]$ToolingCommit,
     [Parameter(Mandatory=$true)][string]$FirmwareRoot,
     [Parameter(Mandatory=$true)][string]$Firmware,
     [Parameter(Mandatory=$true)][string]$Dependencies,
@@ -18,7 +21,12 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/PackageTools.ps1"
 . "$PSScriptRoot/BuildInputs.ps1"
-$WorkTree = Split-Path -Parent $PSScriptRoot
+$WorkTree = [IO.Path]::GetFullPath($SourceRoot)
+if ([IO.Path]::GetFullPath($ToolingRoot) -ne (Split-Path -Parent $PSScriptRoot)) { throw 'Tooling root must be the executing export.' }
+foreach ($required in @('scripts/java/docker.sh','scripts/build_hook.sh','scripts/build_renderers.sh','scripts/run_tests.sh','tests/most/run-native-tests.sh','tests/test_rgd_native_contract.py','deploy/smartphone_integrator/carplay_child.json')) {
+    Assert-FileExists (Join-Path $WorkTree $required) "application build contract ($required)"
+}
+$ImportProvenance = Get-Content -Raw -LiteralPath (Join-Path $ToolingRoot 'IMPORT-PROVENANCE.json') | ConvertFrom-Json
 $Git = (Get-Command git -ErrorAction Stop).Source
 $GitSh = Find-GitSh $Git
 . "$PSScriptRoot/JavaDocker.ps1"
@@ -28,12 +36,13 @@ $DepsDirectory = $Dependencies
 & "$PSScriptRoot/Tests/Test-Profile.ps1" -TestRootParent $ScratchRoot
 . "$PSScriptRoot/Dependencies.ps1"
 $ShortCommit = $Commit.Substring(0, [Math]::Min(12, $Commit.Length))
-$Tag = 'source-' + $ShortCommit
+$SourceLabel = 'source-' + $ShortCommit
+$Tag = $SourceLabel + '-tooling-' + $ToolingCommit.Substring(0,12)
 $SafeTag = $Tag
-$BuildId = $Tag
+$BuildId = $SourceLabel
 $ShellTemplates = @{}
-$TemplateProvenance = @(foreach ($name in @('command.sh','common.sh','install.sh','rollback.sh','collect-logs.sh')) {
-    $p = Join-Path $WorkTree ('deploy/mib/' + $name)
+$TemplateProvenance = @(foreach ($name in @('command.sh','common.sh','install.sh','rollback.sh','collect-logs.sh','entry.sh')) {
+    $p = Join-Path $ToolingRoot ('deploy/mib/' + $name)
     Assert-LfOnly -Path $p -Description $name
     $ShellTemplates[$name] = [IO.File]::ReadAllText($p)
     [ordered]@{ path = 'deploy/mib/' + $name; sha256 = Get-Sha256 $p }
@@ -429,10 +438,11 @@ Write-Step 'Recording source provenance and validating the complete package'
 $missing = @($Guards.Keys | Where-Object { $Guards[$_] -eq 'NOT-RUN' })
 if ($missing.Count) { throw "Unrun compatibility checks: $($missing -join ', ')" }
 $manifest = [ordered]@{
-    schemaVersion = 5
+    schemaVersion = 6
     package = 'mib2q-carplay-rgi-' + $FirmwareName
     preparedUtc = [DateTime]::UtcNow.ToString('o')
-    source = [ordered]@{ kind = 'git-archive'; commit = $Commit; label = $Tag }
+    source = [ordered]@{ kind = 'git-archive'; commit = $Commit; label = $SourceLabel }
+    tooling = [ordered]@{ kind = 'git-archive'; commit = $ToolingCommit; importedFrom = $ImportProvenance; shellTemplates = $TemplateProvenance }
     vehicleBaseline = [ordered]@{ firmwareTrain = $FirmwareTrain; muVersion = $FirmwareName; mmxImage = $FirmwareMmxImage }
     build = [ordered]@{
         buildId = $BuildId
@@ -443,7 +453,6 @@ $manifest = [ordered]@{
         javaCompilerVersion = (Get-Content -LiteralPath (Join-Path $JavaWork 'javac-version.txt') -Raw).Trim()
         javaResources = @($JavaResources | ForEach-Object { [ordered]@{ jarEntry=$_.path; bytes=$_.bytes; sha256=$_.sha256 } })
         hostTests = $HostSuiteResults
-        shellTemplates = $TemplateProvenance
         nativeToolchainImageId = $ToolchainImageId
         hostTestImageId = $HostTestImageId
     }
@@ -466,6 +475,7 @@ $manifest = [ordered]@{
 Write-LfUtf8 -Path (Join-Path $PackageRoot 'PREINSTALL.txt') -Content @"
 CarPlay RGI $FirmwareName / $FirmwareTrain
 Source commit: $Commit
+Tooling commit: $ToolingCommit
 Build ID: $BuildId
 QNX toolchain: $ToolchainImageId
 Initial ACTION: $ArmedAction
@@ -521,10 +531,10 @@ Local checks do not establish vehicle behavior on an untested firmware or cluste
     Write-Host 'stagedChecksums : PASS'
 
 
-& "$PSScriptRoot/Tests/Test-Preparation.ps1" -PackageDirectory $ReleaseDirectory -TestRootParent $ScratchRoot
+& "$PSScriptRoot/Tests/Test-Preparation.ps1" -PackageDirectory $ReleaseDirectory -TestRootParent $ScratchRoot -ExpectedSourceCommit $Commit -ExpectedToolingCommit $ToolingCommit
 & "$PSScriptRoot/Tests/Test-Installer.ps1" -PackageDirectory $ReleaseDirectory -TestRootParent $ScratchRoot
 Write-LfUtf8 -Path (Join-Path $ReleaseDirectory 'PACKAGE-VALIDATION.json') -Content (([ordered]@{
-    schemaVersion = 4; commit = $Commit; sourceLabel = $Tag; armedAction = $ArmedAction
+    schemaVersion = 5; commit = $Commit; sourceLabel = $SourceLabel; toolingCommit = $ToolingCommit; packageTag = $Tag; armedAction = $ArmedAction
     result = 'LOCAL_CHECKS_PASSED_VEHICLE_TEST_PENDING'; publicationGuards = $PublicationGuards
     entryPoint = [ordered]@{ file='mod/command.sh'; sha256=Get-Sha256 $MibCommandPath; forwardsTo='mod/custom.sh' }
     dispatcher = [ordered]@{ file='mod/custom.sh'; sha256=Get-Sha256 (Join-Path $SdRoot 'mod/custom.sh'); matchesPackagedCopy='mod/carplay-rgi/installer/command.sh' }

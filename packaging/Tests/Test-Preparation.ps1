@@ -1,5 +1,7 @@
 param(
     [Parameter(Mandatory=$true)][string]$PackageDirectory,
+    [Parameter(Mandatory=$true)][string]$ExpectedSourceCommit,
+    [Parameter(Mandatory=$true)][string]$ExpectedToolingCommit,
     [string]$TestRootParent = [IO.Path]::GetTempPath()
 )
 $ErrorActionPreference = 'Stop'
@@ -40,6 +42,23 @@ $package = Join-Path $PackageDirectory 'sdcard/mod/carplay-rgi'
 $jar = Join-Path $package 'payload/jars/carplay_hook.jar'
 $required = @('com/luka/carplay/core/CarPlayApp.class','com/luka/carplay/core/ScreenModule.class','de/audi/tghu/fwhmi/DisplayManagerMIB2High.class')
 $manifest = Get-Content -Raw -LiteralPath (Join-Path $package 'meta/manifest.json') | ConvertFrom-Json
+if ($manifest.schemaVersion -ne 6 -or $manifest.source.commit -cne $ExpectedSourceCommit -or $manifest.tooling.commit -cne $ExpectedToolingCommit) {
+    throw 'Package does not identify the selected application and tooling commits.'
+}
+Pass 'manifest identifies both selected Git exports'
+if ($manifest.build.buildId -cne ('source-' + $ExpectedSourceCommit.Substring(0,12))) { throw 'Runtime build ID must identify the application only.' }
+Pass 'runtime build ID remains application-owned'
+$templateRoot = Split-Path -Parent $toolingRoot
+if (@($manifest.tooling.shellTemplates).Count -ne 6) { throw 'Expected all six tooling templates in manifest.' }
+foreach ($template in $manifest.tooling.shellTemplates) {
+    if ((Get-Sha256 (Join-Path $templateRoot $template.path)) -cne $template.sha256) { throw "Template provenance mismatch: $($template.path)" }
+}
+Pass 'all six templates match the selected tooling export'
+foreach ($relative in @('meta/deployment-plan.json','rollback/rollback-plan.json')) {
+    $plan = Get-Content -Raw -LiteralPath (Join-Path $package $relative) | ConvertFrom-Json
+    if ($plan.schemaVersion -ne 3 -or $plan.commit -cne $ExpectedSourceCommit -or $plan.toolingCommit -cne $ExpectedToolingCommit) { throw "Plan provenance mismatch: $relative" }
+}
+Pass 'deployment and rollback plans identify both revisions'
 if ((Assert-JavaJar -Path $jar -ExpectedMajor 48 -RequiredClasses $required) -ne $manifest.build.javaClassCount) { throw 'Class count mismatch' }
 Pass 'built JAR contains required classes and every class is Java 1.4'
 Refuses 'wrong class version refused' { Assert-JavaJar -Path $jar -ExpectedMajor 49 } 'class major 48; expected 49'

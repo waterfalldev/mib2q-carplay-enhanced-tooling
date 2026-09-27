@@ -1,21 +1,22 @@
 # Preparing, installing and recovering a source package
 
-The shared builder lives in `packaging/`. It builds Java, the native hook,
-renderer, supervisor scripts and M.I.B. tooling from one committed Git revision.
+The builder lives in this tooling repository's `packaging/`. It builds Java,
+the native hook, renderer and supervisor scripts from an application commit,
+and generates M.I.B. packaging from a separate tooling commit.
 The input profile contains stock-file identities only. It never selects patches
 or embeds local test sources into the fork.
 
 ## Inputs and build
 
 Use PowerShell 7, Git, Docker and the QNX ARMv7 toolchain image described in the
-root README. Docker supplies Java 8 for compilation, class inspection and Java
-tests; no host JDK is required. Prepare the host-test image once:
+application README. Docker supplies Java 8 for compilation, class inspection and Java
+tests; no host JDK is required. Prepare the host-test image in the application checkout:
 
 ```sh
 docker build -t carplay-rgi-host-tests:local -f tests/Dockerfile.host .
 ```
 
-Keep these directories outside the repository:
+Keep these directories outside both repositories:
 
 - firmware: `Firmware.psd1`, reconstructed `lsd.jar`, original `lsd.jxe`, and
   byte-exact stock `smartphone_integrator.json` and `dio_manager.json`;
@@ -31,9 +32,10 @@ stock files; do not label files from an existing modified install as stock.
 Unknown or missing keys are refused. No real firmware profile is shipped here.
 
 ```powershell
-./packaging/Build-Package.ps1 -FirmwareRoot <external-firmware-directory> `
+./packaging/Build-Package.ps1 -SourceRepository <application-checkout> `
+    -FirmwareRoot <external-firmware-directory> `
     -Dependencies <external-cache> -WorkRoot <external-work> `
-    -OutputRoot <external-packages> -Ref HEAD
+    -OutputRoot <external-packages> -Ref HEAD -ToolingRef HEAD
 ```
 
 The Java image defaults to `eclipse-temurin:8-jdk-jammy` and is downloaded if
@@ -42,11 +44,12 @@ immutable ID is recorded in the package manifest and reused for the Java steps.
 The package uses the verified `lsd.jar` for both firmware classes and the car's
 Java library. Shell overrides for separate stock/JCL inputs apply to component
 development, not firmware package preparation. `-JavaHome` remains accepted;
-current revisions ignore it, while historical `-Ref` builds retain their original
-host-JDK requirement and receive that option.
+current revisions ignore it. Reproducing a historical application without the
+shared Java interface requires its original committed builder (see the README).
 
-The checkout must be clean. `-Ref` resolves locally, without fetching or pushing.
-The package is named `mib2q-carplay-rgi_<Name>_source_<commit>`; an optional
+Both checkouts must be clean. `-Ref` selects application source and `-ToolingRef`
+selects tooling locally, without fetching or pushing. The package is named
+`mib2q-carplay-rgi_<Name>_source_<app12>_tooling_<tools12>`; an optional
 alphanumeric `-Label` is appended, for example a local trial number.
 All source is exported with LF line endings. The recorded immutable toolchain
 image ID is used by both native builds; `-ExpectedToolchainImageId` can enforce

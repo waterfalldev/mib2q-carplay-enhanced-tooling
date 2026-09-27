@@ -1,5 +1,6 @@
 #requires -version 7.0
 param(
+    [Parameter(Mandatory=$true)][string]$SourceRoot,
     [Parameter(Mandatory=$true)][string]$StockJar,
     [Parameter(Mandatory=$true)][string]$Dependencies,
     [Parameter(Mandatory=$true)][string]$OutputRoot,
@@ -9,7 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/PackageTools.ps1"
 . "$PSScriptRoot/BuildInputs.ps1"
-$WorkTree = Split-Path -Parent $PSScriptRoot
+$WorkTree = [IO.Path]::GetFullPath($SourceRoot)
 $LsdJar = [IO.Path]::GetFullPath($StockJar)
 $DepsDirectory = [IO.Path]::GetFullPath($Dependencies)
 . "$PSScriptRoot/Dependencies.ps1"
