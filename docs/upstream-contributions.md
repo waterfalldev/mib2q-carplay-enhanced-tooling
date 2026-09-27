@@ -1,9 +1,20 @@
-# Prepared local contribution branches
+# Contribution branches in the application fork
 
-The application checkout contains the branches below. They form a review stack
-so each comparison has a focused diff. They have not been pushed and no PR has
-been opened. Start from upstream `72d321cc9f57bc2f3a1bb76021404c96b300f326`, which
-was still upstream main when checked during implementation.
+These branches belong to
+[`waterfalldev/mib2q-carplay-rgi-nonfpk`](https://github.com/waterfalldev/mib2q-carplay-rgi-nonfpk).
+The `upstream/` prefix describes their intended contribution scope; it does not
+place them in Luka's repository. Pushing them to the fork does not open PRs or
+change upstream. No upstream PR has been opened for this extraction.
+
+They form a review stack so each comparison has a focused diff. Start from
+upstream `72d321cc9f57bc2f3a1bb76021404c96b300f326`, which was still upstream main
+when checked during implementation.
+
+The fork's `main` contains the complete application after tooling extraction,
+at `186baf76c50c05a633b4ee28aee33f01b182ec50`, also retained as
+`extract-rgi-tooling`. The original `non-fpk-support` branch is preserved. The
+contribution stack reorganizes changes already in `main` for focused review;
+it should not be merged into `main` again merely to include those same changes.
 
 | Branch | Review base | Scope |
 |---|---|---|
@@ -16,8 +27,8 @@ was still upstream main when checked during implementation.
 The MOST branch uses the existing renderer loop and mask painting, with the
 MOST-specific 1x/FXAA path and the same-size fallback fix. It includes the current
 Java feature/tests but excludes shared caching/pacing/profiling. Its documentation
-describes that exact scope. This separation does not change the user's fork:
-`extract-rgi-tooling` retains the entire existing runtime unchanged.
+describes that exact scope. The fork's `main` and `extract-rgi-tooling` retain
+the entire existing runtime unchanged, including the shared performance work.
 
 ## Validation already performed
 

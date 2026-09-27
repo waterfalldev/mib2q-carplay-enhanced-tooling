@@ -2,8 +2,9 @@
 
 Prepared 27 September 2026; implemented locally on the same date. The design and
 starting-point accounting below are retained as the migration record. Packaging
-now lives here, the application workflow is restored, and focused local
-contribution branches are prepared. See [contribution scopes and validation](docs/upstream-contributions.md).
+now lives here, the application workflow is restored, and focused contribution
+branches are prepared in the user's fork. The fork's `main` includes the completed
+extraction. See [contribution scopes and validation](docs/upstream-contributions.md).
 
 ## Outcome and scope
 
@@ -306,10 +307,13 @@ All full PowerShell packaging, custom deployment templates, firmware profile han
 - [x] Recompute the upstream line accounting.
 - [x] Prepare focused upstream contribution branches and their validation notes.
 
-The application is on `extract-rgi-tooling`; its original `non-fpk-support` branch
-is preserved. The extraction diff against the original upstream baseline is now
+The application's `main` has been fast-forwarded to the validated
+`extract-rgi-tooling` commit `186baf76c50c05a633b4ee28aee33f01b182ec50`; its original
+`non-fpk-support` branch is preserved. The extraction diff against the original upstream baseline is now
 73 files, 8,317 additions and 636 deletions. The runtime source and runtime tests
 are unchanged by extraction. The existing workspace command forwards to this
-repository. All work is committed locally; no repositories have been pushed and
-no PRs have been opened. Detailed local build evidence and package comparisons
-are stored outside both repositories under `Build/Validation/ToolingMigration`.
+repository. Publication destinations are the user's application fork and
+`waterfalldev/mib2q-rgi-tooling`; publishing their branches does not change Luka's
+repository or create upstream PRs. Detailed local build evidence and package
+comparisons are stored outside both repositories under
+`Build/Validation/ToolingMigration`.
