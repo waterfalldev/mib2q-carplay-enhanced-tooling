@@ -65,9 +65,11 @@ if (-not (Test-Path -LiteralPath $profilePath -PathType Leaf)) { throw "Firmware
 $profileName = (Import-PowerShellDataFile -LiteralPath $profilePath).Name
 if ($profileName -cne $Firmware) { throw "Build\Firmware\$Firmware holds the profile for '$profileName'." }
 
+& docker version --format '{{.Server.Version}}' *> $null
+if ($LASTEXITCODE -ne 0) { throw 'Docker is not running. Start Docker Desktop (or the Docker daemon) and retry.' }
 & docker image inspect $HostTestImage *> $null
 if ($LASTEXITCODE -ne 0) {
-    throw "Docker image $HostTestImage is missing. Build it once in the fork: docker build -t $HostTestImage -f tests/Dockerfile.host ."
+    throw "Docker image $HostTestImage is missing. Build it once in the fork: docker build --platform linux/amd64 -t $HostTestImage -f tests/Dockerfile.host ."
 }
 
 $git = @('-c', ('safe.directory=' + $RepoRoot.Replace('\', '/')), '-C', $RepoRoot)
