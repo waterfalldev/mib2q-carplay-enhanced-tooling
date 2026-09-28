@@ -41,10 +41,10 @@ against unchanged upstream application runtime code.
 
 | Branch | Current commit | Files | Added / deleted against review base |
 |---|---|---:|---:|
-| `upstream/build-portability` | `4fe9144f6ac79c8ffd3ffd6414298ddffb3a83ce` | 22 | 756 / 353 |
-| `upstream/native-guidance-restoration` | `fa564f7ee94f35ba9e922a947788b47a4d60d60d` | 8 | 468 / 18 |
-| `upstream/most-support` | `e094d18b67234ae65cd76a5b1d3c8fdce5781e34` | 39 | 5,819 / 69 |
-| `review/shared-renderer-performance` | `b7abf48390e436ac56d45eb28d44da5c17402e56` | 12 | 1,250 / 116 |
+| `upstream/build-portability` | `d564b25764ed27e4d68953530cd5ba9c5a776156` | 22 | 756 / 353 |
+| `upstream/native-guidance-restoration` | `987a283d3c3268850c419080d2f27bf35b456be9` | 8 | 468 / 18 |
+| `upstream/most-support` | `a0610314f020650ae4384f22e57d8a00346c74d8` | 39 | 5,819 / 69 |
+| `review/shared-renderer-performance` | `3a75d14ca464b4519a4a564a71e94d3238a37ce0` | 12 | 1,250 / 116 |
 
 The MOST branch uses the existing renderer loop and mask painting, with the
 MOST-specific 1x/FXAA path and the same-size fallback fix. It includes the current
@@ -66,7 +66,8 @@ the entire existing runtime unchanged, including the shared performance work.
   The cleanup's last application commit only changes README documentation;
   its preceding commit `82b25a2f84f72fb629914ca8f8a74a248939abd2` passed the
   complete native, Java, shell and build-regression run.
-- Pre-PR review (28 Sept 2026, `4fe9144`): the car class library (`jcl.jar`)
+- Pre-PR review (28 Sept 2026; the branch is squashed into `b9b97de` native and
+  `d564b25` Java, same final tree): the car class library (`jcl.jar`)
   is optional for the build, as it was upstream; without it the patch compiles
   against JDK 8 and produced a byte-identical JAR. The linkage audit still
   requires it. Fork-only packaging references and `tests/Dockerfile.host` were
