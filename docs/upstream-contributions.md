@@ -42,9 +42,9 @@ against unchanged upstream application runtime code.
 | Branch | Current commit | Files | Added / deleted against review base |
 |---|---|---:|---:|
 | `upstream/build-portability` | `d564b25764ed27e4d68953530cd5ba9c5a776156` | 22 | 756 / 353 |
-| `upstream/native-guidance-restoration` | `987a283d3c3268850c419080d2f27bf35b456be9` | 8 | 468 / 18 |
-| `upstream/most-support` | `a0610314f020650ae4384f22e57d8a00346c74d8` | 39 | 5,819 / 69 |
-| `review/shared-renderer-performance` | `3a75d14ca464b4519a4a564a71e94d3238a37ce0` | 12 | 1,250 / 116 |
+| `upstream/native-guidance-restoration` | `55487a08f3e854b1c8d078f1e061da1e07adb4fc` | 8 | 456 / 18 |
+| `upstream/most-support` | `40ce8311a96b308c56590e61639fb9b940a3f6e6` | 39 | 5,828 / 69 |
+| `review/shared-renderer-performance` | `eb5e76c4a1fb19e701bfefa11e85b8b086976b12` | 12 | 1,250 / 116 |
 
 The MOST branch uses the existing renderer loop and mask painting, with the
 MOST-specific 1x/FXAA path and the same-size fallback fix. It includes the current
@@ -75,6 +75,15 @@ the entire existing runtime unchanged, including the shared performance work.
   changing by exactly that commit. Portability passes native builds, host C and
   shell checks, 35 Java suites, linkage and 9 build contracts; guidance passes 38
   suites; `main` (`8036805`) passes 42 suites and the build contracts.
+- Guidance pre-PR review (28 Sept 2026): the three commits were rewritten
+  without the transient comment-encoding damage and with explanatory messages.
+  `ScreenNavStatusGate.describe()` moved to the MOST commit, which adds its only
+  caller. `NativeGuidanceStateTest` no longer reads the new fields by
+  reflection, so on unfixed upstream code it fails on the actual defect.
+  Without the fixes, all three new tests fail on upstream behaviour. With them,
+  guidance passes 38 suites and MOST 42, both with linkage `errors=0`.
+  The fix stops writing the placeholder `{1}` into data model 68, which only
+  `ClusterService` writes. That change is untested on a Virtual Cockpit.
 - The reordered guidance branch passes all 38 Java suites, including the three
   guidance regressions, plus stock linkage and native/shell checks. Its complete
   tree matches the previously validated portability/restoration/Java stack.
