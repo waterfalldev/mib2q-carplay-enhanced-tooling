@@ -41,10 +41,10 @@ against unchanged upstream application runtime code.
 
 | Branch | Current commit | Files | Added / deleted against review base |
 |---|---|---:|---:|
-| `upstream/build-portability` | `326b904098dbec1e33b2aca6e8c923d2dbb95499` | 22 | 711 / 352 |
-| `upstream/native-guidance-restoration` | `bcd550169a90f4dc917f787ff1ce8a8751b53407` | 8 | 468 / 18 |
-| `upstream/most-support` | `6f1e69b38146c4c497106394c6176f19e31a10e6` | 39 | 5,819 / 69 |
-| `review/shared-renderer-performance` | `f45c4d24a312994f1187a2a2d8faa308daf4cf05` | 12 | 1,250 / 116 |
+| `upstream/build-portability` | `4fe9144f6ac79c8ffd3ffd6414298ddffb3a83ce` | 22 | 756 / 353 |
+| `upstream/native-guidance-restoration` | `fa564f7ee94f35ba9e922a947788b47a4d60d60d` | 8 | 468 / 18 |
+| `upstream/most-support` | `e094d18b67234ae65cd76a5b1d3c8fdce5781e34` | 39 | 5,819 / 69 |
+| `review/shared-renderer-performance` | `b7abf48390e436ac56d45eb28d44da5c17402e56` | 12 | 1,250 / 116 |
 
 The MOST branch uses the existing renderer loop and mask painting, with the
 MOST-specific 1x/FXAA path and the same-size fallback fix. It includes the current
@@ -61,11 +61,19 @@ the entire existing runtime unchanged, including the shared performance work.
   entry points. The direct Java build-regression command now uses that default
   layout, with a dedicated fixture checking the documented invocation. Java
   tests default to two concurrent JVMs, and line-ending rules cover shell
-  scripts only. An unused Java inspection action was removed. The host-test
-  Dockerfile remains app-owned because this tooling repository builds from it.
+  scripts only. An unused Java inspection action was removed.
+  The host-test Dockerfile is on `main` only, because this tooling builds from it.
   The cleanup's last application commit only changes README documentation;
   its preceding commit `82b25a2f84f72fb629914ca8f8a74a248939abd2` passed the
   complete native, Java, shell and build-regression run.
+- Pre-PR review (28 Sept 2026, `4fe9144`): the car class library (`jcl.jar`)
+  is optional for the build, as it was upstream; without it the patch compiles
+  against JDK 8 and produced a byte-identical JAR. The linkage audit still
+  requires it. Fork-only packaging references and `tests/Dockerfile.host` were
+  removed from the branch. The upper three branches were rebased onto it, each
+  changing by exactly that commit. Portability passes native builds, host C and
+  shell checks, 35 Java suites, linkage and 9 build contracts; guidance passes 38
+  suites; `main` (`8036805`) passes 42 suites and the build contracts.
 - The reordered guidance branch passes all 38 Java suites, including the three
   guidance regressions, plus stock linkage and native/shell checks. Its complete
   tree matches the previously validated portability/restoration/Java stack.
