@@ -17,6 +17,15 @@ their commits remain in `main`. The
 contribution stack reorganizes changes already in `main` for focused review;
 it should not be merged into `main` again merely to include those same changes.
 
+`main`'s `d7024f5` takes the portability branch's later Java script cleanup
+(two JVMs by default, no OSGi JAR overrides, the default-layout build
+regression, executable `scripts/java/*.sh`). `main` keeps the `javap` action
+that the branch dropped, because this tooling reads the stock DisplayManager
+bytecode through it. The contribution branches are review branches, not
+package sources: the lower two lack the MOST test runner the builder requires,
+and the upper two lack `javap`. Car packages come from `main`.
+When a review changes a contribution branch, carry the same change to `main`.
+
 | Branch | Review base | Scope |
 |---|---|---|
 | `upstream/build-portability` | upstream `72d321c` | Native and Java Docker builds/tests, Windows paths/container storage, image selection, configurable stock/dependency inputs, stable JARs, Linux host checks and LF rules |
