@@ -191,6 +191,9 @@ collect_file /tmp/carplay_java.log carplay_java.log || COLLECT_ERROR=1
 collect_file /tmp/carplay_java.log.1 carplay_java.log.1 || COLLECT_ERROR=1
 collect_file /tmp/carplay_most_output carplay_most_output.txt || COLLECT_ERROR=1
 collect_file /tmp/carplay_most_output_ready carplay_most_output_ready.txt || COLLECT_ERROR=1
+# The MOST MAP view: window 99's request and report.
+collect_file /tmp/carplay_most_map_output carplay_most_map_output.txt || COLLECT_ERROR=1
+collect_file /tmp/carplay_most_map_output_ready carplay_most_map_output_ready.txt || COLLECT_ERROR=1
 # The renderer's latest settled maneuver frame, exactly as the MOST encoder
 # gets it (binary PPM). Missing unless a CarPlay maneuver was shown since the renderer started.
 collect_file /tmp/carplay_most_frame.ppm carplay_most_frame.ppm || COLLECT_ERROR=1

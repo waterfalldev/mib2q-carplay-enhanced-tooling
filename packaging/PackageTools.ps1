@@ -873,6 +873,13 @@ function Assert-ElfArm32 {
     }
 }
 
+# An application revision with the experimental MOST MAP view and its altScreen
+# hook module: its checks include MostMapViewTest and map_layer_nv12_test.
+function Test-MapViewSource {
+    param([string]$SourceRoot)
+    return Test-Path -LiteralPath (Join-Path $SourceRoot 'hook/altscreen/altscreen_hook.c') -PathType Leaf
+}
+
 # JDK 8 discovery
 
 function Set-CarPlayChildBlock {

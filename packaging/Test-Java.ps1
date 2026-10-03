@@ -14,8 +14,13 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $JavaWork 'host-tests.tsv'
     $seen[$parts[0]] = $true
     $HostSuiteResults += [ordered]@{ name = $parts[0]; result = $parts[1] }
 }
-$expectedCount = if ($frames) { 42 } else { 41 }
+# A MOST MAP view revision adds exactly one suite, MostMapViewTest.
+$mapViewSuites = [int](Test-MapViewSource -SourceRoot $WorkTree)
+$expectedCount = 41 + [int][bool]$frames + $mapViewSuites
 if ($HostSuiteResults.Count -ne $expectedCount) { throw "Expected $expectedCount Java suite results, got $($HostSuiteResults.Count)." }
+if (@($HostSuiteResults | Where-Object { $_.name -ceq 'MostMapViewTest' }).Count -ne $mapViewSuites) {
+    throw "Expected $mapViewSuites MostMapViewTest results."
+}
 $vcTextResult = @($HostSuiteResults | Where-Object { $_.name -eq 'VCTextScrollTest' })
 if ($vcTextResult.Count -ne 1) { throw 'VC resource runtime test result is missing.' }
 Set-Guard 'javaVcTextRuntimeLoad' $vcTextResult[0].result

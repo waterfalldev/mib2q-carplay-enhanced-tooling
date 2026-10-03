@@ -416,7 +416,9 @@ foreach ($result in $NativeResults) {
 if ($NativeResults.Count -ne $NativeSteps.Count) { throw 'Not every native step ran.' }
 # MOST host suites: a zero exit is not enough, each must report exactly once, with no failures.
 $mostOutput = $NativeResults[-1].Output
-$MostSuiteResults = @(foreach ($suite in @('most_output_platform_test','most_output_render_test','most_mask_cache_test')) {
+$HasMapView = Test-MapViewSource -SourceRoot $WorkTree
+$mostSuites = @('most_output_platform_test','most_output_render_test','most_mask_cache_test') + @(if ($HasMapView) { 'map_layer_nv12_test' })
+$MostSuiteResults = @(foreach ($suite in $mostSuites) {
     $lines = @($mostOutput | Where-Object { $_ -match ('^' + $suite + ': [1-9][0-9]* checks, 0 failures$') })
     if ($lines.Count -ne 1) { throw "Native host suite $suite did not report one passing result." }
     [ordered]@{ name = $suite; result = $lines[0] }
@@ -472,6 +474,9 @@ $manifest = [ordered]@{
         rollbackCapturesLogsFirst = $true
     }
 }
+$MapViewInstructions = if ($HasMapView) {
+    "`nExperimental: every CarPlay session offers the phone a second, cluster-map display (altScreen).`nDuring CarPlay route guidance the phone's cluster map takes the MOST MAP view. See the application's docs/cluster/most-map-view.md.`n"
+} else { '' }
 Write-LfUtf8 -Path (Join-Path $PackageRoot 'PREINSTALL.txt') -Content @"
 CarPlay RGI $FirmwareName / $FirmwareTrain
 Source commit: $Commit
@@ -485,6 +490,7 @@ Copy the contents of sdcard to the M.I.B. card. Run Individual Script once.
 Only an install result 0 arms rollback; the result is the last line shown. The next run captures logs and uninstalls.
 Review the result before restarting the unit manually. There is no automatic reboot.
 Local checks do not establish vehicle behavior on an untested firmware or cluster.
+$MapViewInstructions
 "@
     # ACTION (install or rollback) may be changed on the card, so it is not listed.
     $payloadFileObjects = Get-PackageFileDigests `
