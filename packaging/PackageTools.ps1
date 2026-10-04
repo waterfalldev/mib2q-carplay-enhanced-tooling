@@ -874,20 +874,10 @@ function Assert-ElfArm32 {
 }
 
 # An application revision with the experimental MOST MAP view and its altScreen
-# hook module: its checks include MostMapViewTest and the map layer's native suite.
+# hook module: its checks include MostMapViewTest and map_layer_nv12_test.
 function Test-MapViewSource {
     param([string]$SourceRoot)
     return Test-Path -LiteralPath (Join-Path $SourceRoot 'hook/altscreen/altscreen_hook.c') -PathType Leaf
-}
-
-# The map layer's native suite, by the name the revision gives it: map_layer_test since the
-# MAP view window became RGBA, map_layer_nv12_test before.
-function Get-MapLayerSuite {
-    param([string]$SourceRoot)
-    if (Test-Path -LiteralPath (Join-Path $SourceRoot 'tests/most/map_layer_test.c') -PathType Leaf) {
-        return 'map_layer_test'
-    }
-    return 'map_layer_nv12_test'
 }
 
 # JDK 8 discovery

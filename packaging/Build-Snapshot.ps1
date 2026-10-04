@@ -417,7 +417,7 @@ if ($NativeResults.Count -ne $NativeSteps.Count) { throw 'Not every native step 
 # MOST host suites: a zero exit is not enough, each must report exactly once, with no failures.
 $mostOutput = $NativeResults[-1].Output
 $HasMapView = Test-MapViewSource -SourceRoot $WorkTree
-$mostSuites = @('most_output_platform_test','most_output_render_test','most_mask_cache_test') + @(if ($HasMapView) { Get-MapLayerSuite -SourceRoot $WorkTree })
+$mostSuites = @('most_output_platform_test','most_output_render_test','most_mask_cache_test') + @(if ($HasMapView) { 'map_layer_nv12_test' })
 $MostSuiteResults = @(foreach ($suite in $mostSuites) {
     $lines = @($mostOutput | Where-Object { $_ -match ('^' + $suite + ': [1-9][0-9]* checks, 0 failures$') })
     if ($lines.Count -ne 1) { throw "Native host suite $suite did not report one passing result." }
