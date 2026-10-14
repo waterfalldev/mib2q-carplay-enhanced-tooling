@@ -14,9 +14,11 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $JavaWork 'host-tests.tsv'
     $seen[$parts[0]] = $true
     $HostSuiteResults += [ordered]@{ name = $parts[0]; result = $parts[1] }
 }
-# A MOST MAP view revision adds exactly one suite, MostMapViewTest.
+# A MOST MAP view revision adds exactly one suite, MostMapViewTest. A tree rebuilt on
+# upstream 8b3f2d1 also runs upstream's suites: 63 before those two.
 $mapViewSuites = [int](Test-MapViewSource -SourceRoot $WorkTree)
-$expectedCount = 41 + [int][bool]$frames + $mapViewSuites
+$baseSuites = if (Test-UpstreamSource -SourceRoot $WorkTree) { 63 } else { 41 }
+$expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites
 if ($HostSuiteResults.Count -ne $expectedCount) { throw "Expected $expectedCount Java suite results, got $($HostSuiteResults.Count)." }
 if (@($HostSuiteResults | Where-Object { $_.name -ceq 'MostMapViewTest' }).Count -ne $mapViewSuites) {
     throw "Expected $mapViewSuites MostMapViewTest results."

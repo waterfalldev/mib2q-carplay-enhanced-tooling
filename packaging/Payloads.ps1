@@ -35,7 +35,7 @@
         }
         [ordered]@{
             Key = 'HOOK'
-            RepositorySource = 'build/libcarplay_hook.so'
+            RepositorySource = (Get-HookBuildPath -SourceRoot $WorkTree)
             Source = 'payload/hooks/libcarplay_hook.so'
             Destination = '/mnt/app/root/hooks/libcarplay_hook.so'
             Mode = '644'
@@ -82,3 +82,16 @@
             RollbackSource = 'rollback/dio_manager.stock.json'
         }
     )
+    # Upstream's Virtual Cockpit cluster renderer. carplay_monitor.sh starts it unless the
+    # cluster is map-over-MOST, so it ships with every tree that has it.
+    if (Test-UpstreamSource -SourceRoot $WorkTree) {
+        $InstallerTargets += [ordered]@{
+            Key = 'ALTSCREEN_RENDERER'
+            RepositorySource = 'build/altscreen_render'
+            AllowMissingPreviousState = $true
+            Source = 'payload/hooks/altscreen_render'
+            Destination = '/mnt/app/root/hooks/altscreen_render'
+            Mode = '755'
+            Action = 'add'
+        }
+    }

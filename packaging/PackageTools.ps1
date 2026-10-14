@@ -877,7 +877,24 @@ function Assert-ElfArm32 {
 # hook module: its checks include MostMapViewTest and map_layer_nv12_test.
 function Test-MapViewSource {
     param([string]$SourceRoot)
-    return Test-Path -LiteralPath (Join-Path $SourceRoot 'hook/altscreen/altscreen_hook.c') -PathType Leaf
+    # On a tree rebuilt on upstream 8b3f2d1 the MOST MAP receiver is hook/mostmap and
+    # hook/altscreen is upstream's Virtual Cockpit altScreen.
+    return (Test-Path -LiteralPath (Join-Path $SourceRoot 'hook/mostmap/most_map_hook.c') -PathType Leaf) -or
+        ((-not (Test-UpstreamSource -SourceRoot $SourceRoot)) -and
+         (Test-Path -LiteralPath (Join-Path $SourceRoot 'hook/altscreen/altscreen_hook.c') -PathType Leaf))
+}
+
+# A fork tree rebuilt on upstream 8b3f2d1: upstream's altscreen_render beside
+# maneuver_render, upstream's Java suites beside ours, the hook in build/unprotected.
+function Test-UpstreamSource {
+    param([string]$SourceRoot)
+    return Test-Path -LiteralPath (Join-Path $SourceRoot 'altscreen_render/main.c') -PathType Leaf
+}
+
+function Get-HookBuildPath {
+    param([string]$SourceRoot)
+    if (Test-UpstreamSource -SourceRoot $SourceRoot) { return 'build/unprotected/libcarplay_hook.so' }
+    return 'build/libcarplay_hook.so'
 }
 
 # JDK 8 discovery

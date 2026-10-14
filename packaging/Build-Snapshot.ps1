@@ -423,10 +423,11 @@ $MostSuiteResults = @(foreach ($suite in $mostSuites) {
     if ($lines.Count -ne 1) { throw "Native host suite $suite did not report one passing result." }
     [ordered]@{ name = $suite; result = $lines[0] }
 })
-$DownloadedHook = Join-Path $WorkTree 'build/libcarplay_hook.so'
+$DownloadedHook = Join-Path $WorkTree (Get-HookBuildPath -SourceRoot $WorkTree)
 $PackagedRenderer = Join-Path $WorkTree 'build/maneuver_render'
 Assert-ElfArm32 -Path $DownloadedHook -Name 'hook'
 Assert-ElfArm32 -Path $PackagedRenderer -Name 'renderer'
+if (Test-UpstreamSource -SourceRoot $WorkTree) { Assert-ElfArm32 -Path (Join-Path $WorkTree 'build/altscreen_render') -Name 'altscreen renderer' }
 Set-Guard 'nativeSourceBuild'
 Set-Guard 'nativeArm32Elf'
 Set-Guard 'mostOutputHostTests' ('PASS (' + (($MostSuiteResults | ForEach-Object { $_.result }) -join '; ') + ')')
