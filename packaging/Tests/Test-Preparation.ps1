@@ -40,7 +40,12 @@ if ((Get-Sha256 $emittedCollector) -ne (Get-Sha256 $sharedCollector)) { throw 'P
 Pass 'shared collector is packaged byte-for-byte'
 $package = Join-Path $PackageDirectory 'sdcard/mod/carplay-rgi'
 $jar = Join-Path $package 'payload/jars/carplay_hook.jar'
-$required = @('com/luka/carplay/core/CarPlayApp.class','com/luka/carplay/core/ScreenModule.class','de/audi/tghu/fwhmi/DisplayManagerMIB2High.class')
+# Upstream 8b3f2d1 renamed ScreenModule to AltScreenModule; a tree rebuilt on it ships that.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$entries = [IO.Compression.ZipFile]::OpenRead($jar)
+try { $altScreen = @($entries.Entries.FullName) -ccontains 'com/luka/carplay/core/AltScreenModule.class' } finally { $entries.Dispose() }
+$moduleClass = if ($altScreen) { 'com/luka/carplay/core/AltScreenModule.class' } else { 'com/luka/carplay/core/ScreenModule.class' }
+$required = @('com/luka/carplay/core/CarPlayApp.class',$moduleClass,'de/audi/tghu/fwhmi/DisplayManagerMIB2High.class')
 $manifest = Get-Content -Raw -LiteralPath (Join-Path $package 'meta/manifest.json') | ConvertFrom-Json
 if ($manifest.schemaVersion -ne 6 -or $manifest.source.commit -cne $ExpectedSourceCommit -or $manifest.tooling.commit -cne $ExpectedToolingCommit) {
     throw 'Package does not identify the selected application and tooling commits.'
