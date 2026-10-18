@@ -389,12 +389,34 @@ $nativeJob = Start-ThreadJob -ArgumentList $GitSh, $NativeSteps, $ScratchRoot, "
 # Until the native steps are collected, a failure here must also stop them, or they go on
 # writing build/ in the scratch tree kept for diagnosis. Stop-Job lets the step in progress
 # finish (it does not kill the native process) and starts no further step.
+# The host C suite (scripts/run_tests.sh, about two minutes on one core) needs only the source and
+# the built JAR, so it starts as soon as the JAR exists and runs beside the Java tests, the native
+# steps, staging and the installer tests. Its container is named, so a failure anywhere before it
+# is collected removes it.
+$HostSuiteName = 'carplay-rgi-host-suite-' + [guid]::NewGuid().ToString('N').Substring(0, 12)
+$HostSuiteOutput = Join-Path $ScratchRoot 'host-suite.output.txt'
+$hostSuiteJob = $null
+function Stop-HostSuite {
+    if (-not $script:hostSuiteJob) { return }
+    $ErrorActionPreference = 'Continue'   # a container already gone is not an error here
+    & $Docker rm -f $HostSuiteName *> $null
+    Remove-Job -Job $script:hostSuiteJob -Force -ErrorAction SilentlyContinue
+    $script:hostSuiteJob = $null
+}
+$nativeCollected = $false
 try {
 $java = & "$PSScriptRoot/Build-Java.ps1" -SourceRoot $WorkTree -StockJar $LsdJar -Dependencies $Dependencies -OutputRoot $JavaWork -BuildId $BuildId -JavaImage $JavaImageId
 $BuiltJavaJar = $java.Jar
 $JavaClassCount = $java.ClassCount
 $JavaResources = $java.Resources
 $HostTestImageId = (Invoke-Native -Exe $Docker -Arguments @('image','inspect','--format','{{.Id}}',$HostTestImage) -Capture | Select-Object -First 1).Trim()
+New-Item -ItemType Directory -Force -Path (Join-Path $WorkTree 'build') | Out-Null
+Copy-Item -LiteralPath $BuiltJavaJar -Destination (Join-Path $WorkTree 'build/carplay_hook.jar')
+$hostSuiteJob = Start-ThreadJob -ArgumentList $Docker, $HostSuiteName, $WorkTree, $HostTestImageId, $HostSuiteOutput -ScriptBlock {
+    param($Docker, $Name, $WorkTree, $Image, $OutFile)
+    & $Docker run --rm --name $Name --network none --mount ('type=bind,source=' + $WorkTree + ',target=/src,readonly') --workdir /src $Image bash -c 'export PATH=/usr/sbin:/usr/bin:/sbin:/bin; bash scripts/run_tests.sh' *> $OutFile
+    $LASTEXITCODE
+}
 # C half of the native route-guidance contract, in the host-test image; Test-Java.ps1
 # feeds its frames to the built JAR. UBSan only: ASan hangs at random under Docker.
 $RgdContractFrames = Join-Path $ScratchRoot 'rgd-contract'
@@ -403,12 +425,15 @@ Invoke-Native -Exe $Docker -Arguments @('run','--rm','--network','none','--mount
 . "$PSScriptRoot/Test-Java.ps1"
 Write-Step 'Collecting the native build'
 $NativeResults = @(Receive-Job -Job $nativeJob -Wait -AutoRemoveJob)
+$nativeCollected = $true
 }
 finally {
     $env:QNX_TOOLCHAIN_IMAGE = $savedImage
     if ($nativeJob.State -eq 'Running') { Stop-Job -Job $nativeJob }
     Remove-Job -Job $nativeJob -Force -ErrorAction SilentlyContinue
+    if (-not $nativeCollected) { Stop-HostSuite }
 }
+try {
 foreach ($result in $NativeResults) {
     $result.Output | ForEach-Object { Write-Host $_ }
     if ($result.ExitCode -ne 0) { throw "Native step failed ($($result.ExitCode)): $($result.Step)" }
@@ -431,9 +456,6 @@ if (Test-UpstreamSource -SourceRoot $WorkTree) { Assert-ElfArm32 -Path (Join-Pat
 Set-Guard 'nativeSourceBuild'
 Set-Guard 'nativeArm32Elf'
 Set-Guard 'mostOutputHostTests' ('PASS (' + (($MostSuiteResults | ForEach-Object { $_.result }) -join '; ') + ')')
-# Native and shell checks consume the same source and freshly built JAR.
-Copy-Item -LiteralPath $BuiltJavaJar -Destination (Join-Path $WorkTree 'build/carplay_hook.jar')
-Invoke-Native -Exe $Docker -Arguments @('run','--rm','--network','none','--mount',('type=bind,source=' + $WorkTree + ',target=/src,readonly'),'--workdir','/src',$HostTestImageId,'bash','-c','export PATH=/usr/sbin:/usr/bin:/sbin:/bin; bash scripts/run_tests.sh')
 $BuiltJarSha256 = Get-Sha256 $BuiltJavaJar
 . "$PSScriptRoot/Stage-Package.ps1"
 
@@ -540,6 +562,15 @@ $MapViewInstructions
 
 & "$PSScriptRoot/Tests/Test-Preparation.ps1" -PackageDirectory $ReleaseDirectory -TestRootParent $ScratchRoot -ExpectedSourceCommit $Commit -ExpectedToolingCommit $ToolingCommit
 & "$PSScriptRoot/Tests/Test-Installer.ps1" -PackageDirectory $ReleaseDirectory -TestRootParent $ScratchRoot
+Write-Step 'Collecting the host test suite'
+if (-not (Wait-Job -Job $hostSuiteJob -Timeout (20 * 60))) { throw 'Host test suite (scripts/run_tests.sh) still running after 20 minutes.' }
+$hostSuiteExit = @(Receive-Job -Job $hostSuiteJob)[-1]
+if (Test-Path -LiteralPath $HostSuiteOutput) { Get-Content -LiteralPath $HostSuiteOutput | ForEach-Object { Write-Host $_ } }
+Remove-Job -Job $hostSuiteJob
+$hostSuiteJob = $null
+if ($hostSuiteExit -ne 0) { throw "Host test suite failed ($hostSuiteExit): scripts/run_tests.sh" }
+}
+finally { Stop-HostSuite }
 Write-LfUtf8 -Path (Join-Path $ReleaseDirectory 'PACKAGE-VALIDATION.json') -Content (([ordered]@{
     schemaVersion = 5; commit = $Commit; sourceLabel = $SourceLabel; toolingCommit = $ToolingCommit; packageTag = $Tag; armedAction = $ArmedAction
     result = 'LOCAL_CHECKS_PASSED_VEHICLE_TEST_PENDING'; publicationGuards = $PublicationGuards
