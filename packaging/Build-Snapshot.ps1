@@ -508,7 +508,7 @@ Build ID: $BuildId
 QNX toolchain: $ToolchainImageId
 Initial ACTION: $ArmedAction
 
-This package contains private stock configuration and rollback inputs. Do not publish it.
+The sdcard folder includes this firmware's stock smartphone_integrator.json and dio_manager.json for the install check and rollback; they hold no unit or personal data. Share only the sdcard folder: the build log beside it records local paths.
 Copy the contents of sdcard to the M.I.B. card. Run Individual Script once.
 Only an install result 0 arms rollback; the result is the last line shown. The next run captures logs and uninstalls.
 Review the result before restarting the unit manually. There is no automatic reboot.

@@ -53,8 +53,11 @@ selects tooling locally, without fetching or pushing. The package is named
 alphanumeric `-Label` is appended, for example a local trial number.
 All source is exported with LF line endings. The recorded immutable toolchain
 image ID is used by both native builds; `-ExpectedToolchainImageId` can enforce
-a previously reviewed ID. Generated packages contain private stock configuration
-and rollback materials and must not be committed or published.
+a previously reviewed ID. Generated packages contain the firmware's stock configuration
+and rollback inputs, but no unit or personal data, so a package's `sdcard/`
+folder can be shared with owners of the same firmware (as a release, for
+example). The build log and validation report beside it record local paths:
+keep those private. Never commit packages.
 
 Publication happens only after compilation, Java linkage/resource/version checks,
 native checks, installer fault/recovery tests and package checksum verification.
