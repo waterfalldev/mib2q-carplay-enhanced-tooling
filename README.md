@@ -1,9 +1,11 @@
-# MIB2Q RGI tooling
+# MIB2Q CarPlay Enhanced tooling
 
 Local package preparation and managed M.I.B. installation/recovery for the
-CarPlay RGI application. Application compilation and runtime tests remain in
-the application repository; this repository orchestrates them and creates the
-SD overlay from external stock firmware inputs.
+[mib2q-carplay-enhanced-nonfpk](https://github.com/waterfalldev/mib2q-carplay-enhanced-nonfpk)
+CarPlay application, which carries no installer of its own. Application
+compilation and runtime tests remain in the application repository; this
+repository orchestrates them and creates the SD overlay from external stock
+firmware inputs.
 
 See [the migration plan](MIGRATION-PLAN.md), [import provenance](IMPORT-PROVENANCE.json)
 and [installation and recovery](docs/install-and-recovery.md).

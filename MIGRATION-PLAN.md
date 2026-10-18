@@ -202,6 +202,8 @@ The managed installer and upstream's `.carplay-stock` installer are different in
 
 ## Restore the independent upstream workflow
 
+**Superseded 2026-10-18.** The application fork no longer carries upstream's M.I.B. bundles or their shell tests: its documentation commit deletes `install_MoreIncredibleBash/`, `uninstall_MoreIncredibleBash/`, `logging_MoreIncredibleBash/`, `scripts/prepare_install.sh` and the `scripts/test_install_*.sh` / `test_logging_mib.sh` checks, and its docs point here for packaging, installation and rollback. The plan below is kept as a record and is not to be carried out.
+
 Restore these application paths from upstream baseline `72d321c` as the starting point:
 
 | Files | Action |
