@@ -62,9 +62,8 @@ check migration from an existing managed package, run:
     -PreviousPackageDirectory <old-managed-package>
 ```
 
-Application revisions with the experimental MOST MAP view run its extra checks. Use a
-separate experimental output directory. See
-[the experimental MOST MAP view](docs/install-and-recovery.md#experimental-most-map-view).
+Application revisions with the MOST MAP view run its extra checks. See
+[the MOST MAP view](docs/install-and-recovery.md#most-map-view).
 
 The initial supported application is commit `237ded9` and later revisions that
 retain its component build interface. Missing required entry points fail before

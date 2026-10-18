@@ -873,7 +873,7 @@ function Assert-ElfArm32 {
     }
 }
 
-# An application revision with the experimental MOST MAP view and its altScreen
+# An application revision with the MOST MAP view and its altScreen
 # hook module: its checks include MostMapViewTest and map_layer_nv12_test.
 function Test-MapViewSource {
     param([string]$SourceRoot)

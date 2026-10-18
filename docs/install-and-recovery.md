@@ -101,17 +101,14 @@ Older managed packages without a runtime monitor entry can be upgraded when
 that file is absent. A partial upgrade can be rolled back when the file matches
 the incoming package. An unrelated monitor is never adopted or removed.
 
-## Experimental MOST MAP view
+## MOST MAP view
 
-An application revision with the MOST MAP view (detected by its `hook/altscreen` module)
-needs no extra payload: the renderer and the hook it already installs carry the feature,
-which is always on - every CarPlay session offers the phone a cluster-map display (see
-the application's `docs/cluster/most-map-view.md`). Its builds also run the MAP view's
-Java suite and map-window check.
-
-Prepare these packages in a separate experimental output directory, for example
-`<CarRoot>\Packages\Experimental` with `-Label mu1329map07`, to keep regular
-packages and their archive separate.
+An application revision with the MOST MAP view (detected by its `hook/mostmap` module, or
+`hook/altscreen` on trees before the upstream rebuild) needs no extra payload: the renderer
+and the hook it already installs carry the feature, which is always on - every CarPlay
+session offers the phone a cluster-map display (see the application's
+`docs/cluster-and-rgi/MOST_MAP_VIEW.md`). Its builds also run the MAP view's Java suite and
+map-window check.
 
 The shared collector also saves the MAP window's request and report. Missing optional files
 do not fail a capture.

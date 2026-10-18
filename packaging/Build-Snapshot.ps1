@@ -498,7 +498,7 @@ $manifest = [ordered]@{
     }
 }
 $MapViewInstructions = if ($HasMapView) {
-    "`nExperimental: every CarPlay session offers the phone a second, cluster-map display (altScreen).`nDuring CarPlay route guidance the phone's cluster map takes the MOST MAP view. See the application's docs/cluster/most-map-view.md.`n"
+    "`nEvery CarPlay session offers the phone a second, cluster-map display (altScreen).`nDuring CarPlay route guidance the phone's cluster map takes the MOST MAP view. See the application's docs/cluster-and-rgi/MOST_MAP_VIEW.md.`n"
 } else { '' }
 Write-LfUtf8 -Path (Join-Path $PackageRoot 'PREINSTALL.txt') -Content @"
 CarPlay RGI $FirmwareName / $FirmwareTrain
