@@ -52,6 +52,7 @@ $ExpectedGuardNames = @(
     'stockSysConst541KdkCreation'
     'upstreamSupervisorNoLdPreload'
     'upstreamRgiMessageIds'
+    'phoneDataMessageIds'
     'nativeSourceBuild'
     'nativeArm32Elf'
     'mostOutputHostTests'
@@ -347,6 +348,58 @@ update.
     }
 
     Set-Guard 'upstreamRgiMessageIds'
+
+    # Calls and car data: the hook's build default and the Java switch must agree, and
+    # the package registers their iAP2 IDs and the PASCD bit only when both are on.
+    $HookBuildScript = Join-Path $WorkTree 'scripts\build_hook_common.sh'
+    $FeaturesSource = Join-Path $WorkTree 'java_patch\com\luka\carplay\core\Features.java'
+    Assert-FileExists $HookBuildScript 'hook build script'
+    Assert-FileExists $FeaturesSource 'Java feature switches'
+
+    $hookPhoneData = [regex]::Match(
+        [System.IO.File]::ReadAllText($HookBuildScript),
+        'local HOOK_PHONE_DATA="\$\{HOOK_PHONE_DATA:-([01])\}"')
+    $javaPhoneData = [regex]::Match(
+        [System.IO.File]::ReadAllText($FeaturesSource),
+        'boolean PHONE_DATA = (true|false);')
+
+    if (-not $hookPhoneData.Success -or -not $javaPhoneData.Success) {
+        throw 'Could not read the HOOK_PHONE_DATA default or Features.PHONE_DATA. Manual review required.'
+    }
+
+    $PhoneData = $hookPhoneData.Groups[1].Value -eq '1'
+
+    if ($PhoneData -ne ($javaPhoneData.Groups[1].Value -eq 'true')) {
+        throw "HOOK_PHONE_DATA defaults to $($hookPhoneData.Groups[1].Value) but Features.PHONE_DATA is $($javaPhoneData.Groups[1].Value); they must agree."
+    }
+
+    $DioSentIds = @($RgiSentIds)
+    $DioReceivedIds = @($RgiReceivedIds)
+    $DioNmeaBits = 0
+
+    if ($PhoneData) {
+        foreach ($message in $ExpectedPhoneDataMessages) {
+            $definition =
+                '#define\s+' + [regex]::Escape($message.Symbol) +
+                '\s+' + [regex]::Escape($message.Id) + '\b'
+
+            if ([System.IO.File]::ReadAllText((Join-Path $WorkTree $message.Source)) -notmatch $definition) {
+                throw "$($message.Source) no longer defines $($message.Symbol) = $($message.Id). Manual review required."
+            }
+
+            if ($stockDioText.Contains('"' + $message.Id + '"')) {
+                throw "Stock dio_manager.json already contains message ID $($message.Id). Refusing to treat it as stock."
+            }
+        }
+
+        $DioSentIds += $PhoneDataSentIds
+        $DioReceivedIds += $PhoneDataReceivedIds
+        $DioNmeaBits = $PhoneDataNmeaBits
+        Set-Guard 'phoneDataMessageIds'
+    }
+    else {
+        Set-Guard 'phoneDataMessageIds' 'NOT-SHIPPED'
+    }
 
 
 Write-Step 'Building native components from the exported source'

@@ -62,8 +62,9 @@
     Add-MessageIds `
         -StockPath $StockDio `
         -Destination $PatchedDio `
-        -SentIds $RgiSentIds `
-        -ReceivedIds $RgiReceivedIds
+        -SentIds $DioSentIds `
+        -ReceivedIds $DioReceivedIds `
+        -NmeaBits $DioNmeaBits
 
     # The upstream child was already checked for the required launcher paths.
     # Validate exact child equality, forbidden preload, message counts and the
@@ -74,8 +75,9 @@
         -UpstreamChild $CarPlayChildPath `
         -StockDio $StockDio `
         -PatchedDio $PatchedDio `
-        -SentIds $RgiSentIds `
-        -ReceivedIds $RgiReceivedIds
+        -SentIds $DioSentIds `
+        -ReceivedIds $DioReceivedIds `
+        -NmeaBits $DioNmeaBits
 
     Set-Guard 'configPatchScope'
 
@@ -134,8 +136,9 @@
                 sha256 = Get-Sha256 $PatchedDio
             }
             allowedChanges = [ordered]@{
-                MessagesSentByAccessory = $RgiSentIds
-                MessagesReceivedFromDevice = $RgiReceivedIds
+                MessagesSentByAccessory = $DioSentIds
+                MessagesReceivedFromDevice = $DioReceivedIds
+                nmeaBitsOred = $DioNmeaBits
             }
         }
     }

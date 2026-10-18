@@ -81,15 +81,21 @@ $smartPath = Join-Path $testRoot 'smartphone.json'
 $dioPath = Join-Path $testRoot 'dio.json'
 $smartSource = Join-Path $package 'payload/config/smartphone_integrator.json'
 $dioSource = Join-Path $package 'payload/config/dio_manager.json'
+# The package records what it was allowed to change; route guidance is always among it.
+$allowed = (Get-Content -Raw -LiteralPath (Join-Path $package 'meta/config-patches.json') | ConvertFrom-Json).dioManager.allowedChanges
+foreach ($id in @('0x5200','0x5203')) { if (@($allowed.MessagesSentByAccessory) -notcontains $id) { throw "Package does not register $id" } }
+foreach ($id in @('0x5201','0x5202','0x5204')) { if (@($allowed.MessagesReceivedFromDevice) -notcontains $id) { throw "Package does not register $id" } }
 $argsForConfig = @{
     StockSmartphone = Join-Path $package 'rollback/smartphone_integrator.stock.json'
     PatchedSmartphone = $smartPath
     UpstreamChild = Join-Path $package 'meta/upstream_carplay_child.json'
     StockDio = Join-Path $package 'rollback/dio_manager.stock.json'
     PatchedDio = $dioPath
-    SentIds = @('0x5200','0x5203')
-    ReceivedIds = @('0x5201','0x5202','0x5204')
+    SentIds = [string[]]@($allowed.MessagesSentByAccessory)
+    ReceivedIds = [string[]]@($allowed.MessagesReceivedFromDevice)
+    NmeaBits = [int]$allowed.nmeaBitsOred
 }
+Pass 'the package registers the route-guidance IDs'
 Copy-Item -LiteralPath $smartSource -Destination $smartPath
 Copy-Item -LiteralPath $dioSource -Destination $dioPath
 Assert-ConfigPatchScope @argsForConfig
@@ -130,7 +136,24 @@ Refuses 'missing RGI ID refused' { Assert-ConfigPatchScope @argsForConfig } 'exa
 $dio = ConvertFrom-HashCommentJson -Path $dioSource -Description 'fixture'
 $dio | Add-Member -NotePropertyName unrelatedChange -NotePropertyValue $true
 WriteJson $dioPath $dio
-Refuses 'DIO change outside message arrays refused' { Assert-ConfigPatchScope @argsForConfig } 'changed outside the two permitted'
+Refuses 'DIO change outside message arrays refused' { Assert-ConfigPatchScope @argsForConfig } 'changed outside the permitted'
+$dio = ConvertFrom-HashCommentJson -Path $dioSource -Description 'fixture'
+$dio.iap2.nmea = '0x00FF'
+WriteJson $dioPath $dio
+Refuses 'nmea mask other than stock plus the allowed bits refused' { Assert-ConfigPatchScope @argsForConfig } 'iap2.nmea is 0x00FF'
+$withoutBits = $argsForConfig.Clone()
+$withoutBits.NmeaBits = 0
+Copy-Item -LiteralPath $dioSource -Destination $dioPath -Force
+if ([int]$allowed.nmeaBitsOred) {
+    Refuses 'nmea bits the package did not declare refused' { Assert-ConfigPatchScope @withoutBits } 'iap2.nmea is'
+}
+$patched = Join-Path $testRoot 'dio-added.json'
+Add-MessageIds -StockPath (Join-Path $package 'rollback/dio_manager.stock.json') -Destination $patched -SentIds $argsForConfig.SentIds -ReceivedIds $argsForConfig.ReceivedIds -NmeaBits $argsForConfig.NmeaBits
+if ([IO.File]::ReadAllText($patched) -cne [IO.File]::ReadAllText($dioSource)) { throw 'Add-MessageIds did not reproduce the staged dio_manager.json' }
+Pass 'Add-MessageIds reproduces the staged dio_manager.json byte for byte'
+Copy-Item -LiteralPath (Join-Path $package 'rollback/dio_manager.stock.json') -Destination $patched -Force
+[IO.File]::AppendAllText($patched, "`n        `"nmea`":`"0x0001`",`n")
+Refuses 'a second nmea mask refused' { Add-MessageIds -StockPath $patched -Destination (Join-Path $testRoot 'dio-twice.json') -SentIds @() -ReceivedIds @() -NmeaBits 8 } 'exactly one iap2.nmea'
 $dio = ConvertFrom-HashCommentJson -Path $dioSource -Description 'fixture'
 $dio.iap2.MessagesSentByAccessory = @($dio.iap2.MessagesSentByAccessory | Where-Object { $_ -ne '0x5200' })
 $dio.iap2.MessagesReceivedFromDevice += '0x5200'

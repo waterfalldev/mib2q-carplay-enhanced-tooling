@@ -983,12 +983,30 @@ function Set-CarPlayChildBlock {
         -Content (($output -join "`n") + "`n")
 }
 
+# iap2.nmea: dio's 16-bit mask of the NMEA sentences it advertises, as "0xNNNN".
+function ConvertFrom-NmeaMask {
+    param([string]$Value)
+
+    if ($Value -notmatch '^0x[0-9A-Fa-f]{1,4}$') {
+        throw "Unexpected iap2.nmea value '$Value'."
+    }
+
+    return [Convert]::ToInt32($Value.Substring(2), 16)
+}
+
+function Format-NmeaMask {
+    param([int]$Mask)
+
+    return '0x{0:X4}' -f $Mask
+}
+
 function Add-MessageIds {
     param(
         [string]$StockPath,
         [string]$Destination,
         [string[]]$SentIds,
-        [string[]]$ReceivedIds
+        [string[]]$ReceivedIds,
+        [int]$NmeaBits = 0
     )
 
     $lines = [System.IO.File]::ReadAllLines($StockPath)
@@ -1057,6 +1075,29 @@ function Add-MessageIds {
         -Key 'MessagesReceivedFromDevice' `
         -Ids $ReceivedIds
 
+    if ($NmeaBits) {
+        # The string-valued mask only: the top-level "nmea" is an object.
+        $nmeaLines = @()
+
+        for ($i = 0; $i -lt $lines.Length; $i++) {
+            if ($lines[$i] -match '"nmea"\s*:\s*"0x') {
+                $nmeaLines += $i
+            }
+        }
+
+        if ($nmeaLines.Count -ne 1) {
+            throw "Expected exactly one iap2.nmea mask; found $($nmeaLines.Count)."
+        }
+
+        $index = $nmeaLines[0]
+        $value = [regex]::Match($lines[$index], '"nmea"\s*:\s*"([^"]*)"').Groups[1]
+        $mask = (ConvertFrom-NmeaMask $value.Value) -bor $NmeaBits
+
+        $lines[$index] =
+            $lines[$index].Substring(0, $value.Index) + (Format-NmeaMask $mask) +
+            $lines[$index].Substring($value.Index + $value.Length)
+    }
+
     Write-LfUtf8 `
         -Path $Destination `
         -Content (($lines -join "`n") + "`n")
@@ -1090,7 +1131,8 @@ function Assert-ConfigPatchScope {
         [string]$StockDio,
         [string]$PatchedDio,
         [string[]]$SentIds,
-        [string[]]$ReceivedIds
+        [string[]]$ReceivedIds,
+        [int]$NmeaBits = 0
     )
 
     $stockSmartObject = ConvertFrom-HashCommentJson `
@@ -1164,17 +1206,25 @@ function Assert-ConfigPatchScope {
         -Expected $expectedReceived `
         -Description 'iap2.MessagesReceivedFromDevice'
 
-    # As above, equalise the two allowed arrays and compare the rest of the
+    $expectedNmea = Format-NmeaMask (
+        (ConvertFrom-NmeaMask ([string]$stockDioObject.iap2.nmea)) -bor $NmeaBits)
+
+    if ([string]$patchedDioObject.iap2.nmea -cne $expectedNmea) {
+        throw "iap2.nmea is $($patchedDioObject.iap2.nmea); expected $expectedNmea."
+    }
+
+    # As above, equalise the allowed entries and compare the rest of the
     # parsed document to prove no other setting changed.
     $stockDioObject.iap2.MessagesSentByAccessory =
         $patchedDioObject.iap2.MessagesSentByAccessory
     $stockDioObject.iap2.MessagesReceivedFromDevice =
         $patchedDioObject.iap2.MessagesReceivedFromDevice
+    $stockDioObject.iap2.nmea = $patchedDioObject.iap2.nmea
 
     if (
         (ConvertTo-ComparableJson $stockDioObject) -cne
         (ConvertTo-ComparableJson $patchedDioObject)
     ) {
-        throw 'dio_manager.json changed outside the two permitted iAP2 message arrays.'
+        throw 'dio_manager.json changed outside the permitted iAP2 message arrays and nmea mask.'
     }
 }
