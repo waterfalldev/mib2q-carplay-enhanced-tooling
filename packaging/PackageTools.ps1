@@ -156,7 +156,7 @@ function Publish-PreparedPackage {
         }
     }
     $older = @(Get-ChildItem -LiteralPath $Root -Directory | Where-Object {
-        $_.Name -like 'mib2q-carplay-rgi_*' -and
+        ($_.Name -like 'mib2q-carplay-enhanced_*' -or $_.Name -like 'mib2q-carplay-rgi_*') -and   # and the pre-rename prefix
         $_.FullName -ne [IO.Path]::GetFullPath($Final) -and
         (Test-Path -LiteralPath (Join-Path $_.FullName 'PACKAGE-VALIDATION.json') -PathType Leaf)
     })

@@ -49,7 +49,7 @@ shared Java interface requires its original committed builder (see the README).
 
 Both checkouts must be clean. `-Ref` selects application source and `-ToolingRef`
 selects tooling locally, without fetching or pushing. The package is named
-`mib2q-carplay-rgi_<Name>_source_<app12>_tooling_<tools12>`; an optional
+`mib2q-carplay-enhanced_<Name>_source_<app12>_tooling_<tools12>`; an optional
 alphanumeric `-Label` is appended, for example a local trial number.
 All source is exported with LF line endings. The recorded immutable toolchain
 image ID is used by both native builds; `-ExpectedToolchainImageId` can enforce

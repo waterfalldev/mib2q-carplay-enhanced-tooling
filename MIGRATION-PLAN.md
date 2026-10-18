@@ -8,7 +8,7 @@ extraction. See [contribution scopes and validation](docs/upstream-contributions
 
 ## Outcome and scope
 
-Move the complete custom package preparation, M.I.B. deployment and recovery system into `mib2q-rgi-tooling`. Keep the CarPlay application, its component build commands and its runtime tests in `mib2q-carplay-rgi-nonfpk`. Restore the upstream installation workflow in the application tree. Prepare focused upstream contributions separately from the tooling extraction.
+Move the complete custom package preparation, M.I.B. deployment and recovery system into `mib2q-carplay-enhanced-tooling`. Keep the CarPlay application, its component build commands and its runtime tests in `mib2q-carplay-enhanced-nonfpk`. Restore the upstream installation workflow in the application tree. Prepare focused upstream contributions separately from the tooling extraction.
 
 This is a repository-boundary change. Preserve the current runtime and the custom installer's behavior during extraction. Do not combine it with renderer optimization, removal of runtime tests, redesign of the installer or a new general-purpose build framework.
 
@@ -19,13 +19,13 @@ The tooling can remain local or be pushed to its own remote later. A separate re
 | Item | Baseline |
 |---|---|
 | Workspace | `<CarRoot>` |
-| Application checkout | `<CarRoot>\Repositories\mib2q-carplay-rgi-nonfpk` |
+| Application checkout | `<CarRoot>\Repositories\mib2q-carplay-enhanced-nonfpk` |
 | Application branch | `non-fpk-support` |
 | Application commit | `237ded9a3249dba395f7ac11968ad43440c6f31d` |
 | Application working tree | Clean when inspected |
 | Upstream comparison baseline | `luka-dev/mib2q-carplay-rgi`, commit `72d321cc9f57bc2f3a1bb76021404c96b300f326` |
-| Tooling checkout | `<CarRoot>\Repositories\mib2q-rgi-tooling` |
-| Tooling remote | `https://github.com/waterfalldev/mib2q-rgi-tooling.git` |
+| Tooling checkout | `<CarRoot>\Repositories\mib2q-carplay-enhanced-tooling` |
+| Tooling remote | `https://github.com/waterfalldev/mib2q-carplay-enhanced-tooling.git` |
 | Tooling initial state | Empty remote successfully cloned; local unborn branch `main` |
 | Existing local launcher | `<CarRoot>\Build\Prepare-CarPlayRGI.ps1` |
 
@@ -136,8 +136,8 @@ Extend the extracted `packaging/Build-Package.ps1` with these explicit inputs:
 Proposed direct invocation after implementation:
 
 ```powershell
-& <CarRoot>\Repositories\mib2q-rgi-tooling\packaging\Build-Package.ps1 `
-    -SourceRepository <CarRoot>\Repositories\mib2q-carplay-rgi-nonfpk `
+& <CarRoot>\Repositories\mib2q-carplay-enhanced-tooling\packaging\Build-Package.ps1 `
+    -SourceRepository <CarRoot>\Repositories\mib2q-carplay-enhanced-nonfpk `
     -Ref HEAD -ToolingRef HEAD `
     -FirmwareRoot <CarRoot>\Build\Firmware\MU1329 `
     -Dependencies <CarRoot>\Build\Dependencies `
@@ -192,7 +192,7 @@ Keep application and tooling identities distinct:
 - Add a manifest `tooling` record containing its Git commit, export kind and the imported-from application commit where applicable. Record all six M.I.B. source templates, including the compatibility `entry.sh`, under tooling provenance.
 - Bump the manifest schema from 5 to 6 and the package validation schema from 4 to 5. Update every reader and fixture in this repository. Review generated deployment/rollback metadata for the same ambiguity; add explicit tooling provenance where appropriate and version any changed schema.
 - Record both full commits in `PACKAGE-VALIDATION.json`, `PREINSTALL.txt` and the build log. Continue recording firmware profile/input hashes, immutable image IDs and payload checksums.
-- Include both abbreviated commits in the package directory and package tag, for example `mib2q-carplay-rgi_MU1329_source_<app12>_tooling_<tools12>_<label>`. Two tool revisions packaging the same application must not collide or require replacement of one another.
+- Include both abbreviated commits in the package directory and package tag, for example `mib2q-carplay-enhanced_MU1329_source_<app12>_tooling_<tools12>_<label>`. Two tool revisions packaging the same application must not collide or require replacement of one another.
 - Keep the application's embedded runtime build ID tied to the application commit for this extraction. A tooling-only change must not unnecessarily rebuild the Java identity as a different application version.
 - Keep the existing owner marker, `CARPLAY_RGI_STATE_V1` header, file ownership keys, installed destinations and backup paths. Recording tooling metadata is not a reason to invalidate installed packages or abandon verified backups.
 
@@ -291,11 +291,11 @@ Acceptance is a working clean-commit build from both repositories, an independen
 
 The shared renderer frame pacing, mask caching and profiling changes are not automatically part of the initial MOST PR. They affect more than the new cluster path. Separate them for review and appropriate FPK validation; first establish which pieces the MOST implementation actually requires. Keep their implementation and tests together on the fork while that decision is made. Mixed commits such as `c2fcfa7` must be split by affected behavior rather than cherry-picked wholesale.
 
-All full PowerShell packaging, custom deployment templates, firmware profile handling, package archiving and their tests belong to `mib2q-rgi-tooling`. Upstream can receive a useful runtime fix or feature without agreeing to maintain this local workflow.
+All full PowerShell packaging, custom deployment templates, firmware profile handling, package archiving and their tests belong to `mib2q-carplay-enhanced-tooling`. Upstream can receive a useful runtime fix or feature without agreeing to maintain this local workflow.
 
 ## Completion checklist
 
-- [x] Clone `waterfalldev/mib2q-rgi-tooling` into the requested `Repositories` folder.
+- [x] Clone `waterfalldev/mib2q-carplay-enhanced-tooling` into the requested `Repositories` folder.
 - [x] Inspect application dependencies and current package evidence; record this plan.
 - [x] Import the exact tooling files and document their origin.
 - [x] Implement and commit independent application/tooling source selection.
@@ -313,7 +313,7 @@ with their commits preserved in `main`. The extraction diff against the original
 73 files, 8,317 additions and 636 deletions. The runtime source and runtime tests
 are unchanged by extraction. The existing workspace command forwards to this
 repository. Publication destinations are the user's application fork and
-`waterfalldev/mib2q-rgi-tooling`; publishing their branches does not change Luka's
+`waterfalldev/mib2q-carplay-enhanced-tooling`; publishing their branches does not change Luka's
 repository or create upstream PRs. Detailed local build evidence and package
 comparisons are stored outside both repositories under
 `Build/Validation/ToolingMigration`.

@@ -178,15 +178,15 @@ Pass 'failed replacement restores the last completed package'
 # Archive all prior completed versions, preserve name collisions and unrelated
 # directories, and undo every archive move if final publication fails.
 $versionsRoot = Join-Path $testRoot 'versions-publication'
-foreach ($name in @('mib2q-carplay-rgi_v1','mib2q-carplay-rgi_v2','Archive/mib2q-carplay-rgi_v1','notes','.pending-v3')) {
+foreach ($name in @('mib2q-carplay-enhanced_v1','mib2q-carplay-enhanced_v2','Archive/mib2q-carplay-enhanced_v1','notes','.pending-v3')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $versionsRoot $name) | Out-Null
     [IO.File]::WriteAllText((Join-Path $versionsRoot "$name/identity.txt"), $name)
 }
 foreach ($version in @('v1','v2')) {
-    [IO.File]::WriteAllText((Join-Path $versionsRoot "mib2q-carplay-rgi_$version/PACKAGE-VALIDATION.json"), '{}')
+    [IO.File]::WriteAllText((Join-Path $versionsRoot "mib2q-carplay-enhanced_$version/PACKAGE-VALIDATION.json"), '{}')
 }
 $versionsPending = Join-Path $versionsRoot '.pending-v3'
-$versionsFinal = Join-Path $versionsRoot 'mib2q-carplay-rgi_v3'
+$versionsFinal = Join-Path $versionsRoot 'mib2q-carplay-enhanced_v3'
 & {
     $script:moveCalls = 0
     function Move-Item {
@@ -199,13 +199,13 @@ $versionsFinal = Join-Path $versionsRoot 'mib2q-carplay-rgi_v3'
     Refuses 'publication failure after multiple archives is reported' { Publish-PreparedPackage $versionsRoot $versionsPending $versionsFinal } 'injected final publication failure'
 }
 foreach ($version in @('v1','v2')) {
-    if (-not (Test-Path (Join-Path $versionsRoot "mib2q-carplay-rgi_$version/identity.txt"))) { throw 'Old version was not restored after failed publication' }
+    if (-not (Test-Path (Join-Path $versionsRoot "mib2q-carplay-enhanced_$version/identity.txt"))) { throw 'Old version was not restored after failed publication' }
 }
 Pass 'failed publication restores all previous versions'
 Publish-PreparedPackage $versionsRoot $versionsPending $versionsFinal
-if (@(Get-ChildItem $versionsRoot -Directory -Filter 'mib2q-carplay-rgi_*').Count -ne 1) { throw 'Older completed versions remain outside Archive' }
+if (@(Get-ChildItem $versionsRoot -Directory -Filter 'mib2q-carplay-enhanced_*').Count -ne 1) { throw 'Older completed versions remain outside Archive' }
 if (@(Get-ChildItem (Join-Path $versionsRoot 'Archive') -Directory).Count -ne 3) { throw 'Archive collision overwrote or lost a package' }
-if ((Get-Content -Raw (Join-Path $versionsRoot 'Archive/mib2q-carplay-rgi_v1/identity.txt')) -ne 'Archive/mib2q-carplay-rgi_v1') { throw 'Existing archive changed' }
+if ((Get-Content -Raw (Join-Path $versionsRoot 'Archive/mib2q-carplay-enhanced_v1/identity.txt')) -ne 'Archive/mib2q-carplay-enhanced_v1') { throw 'Existing archive changed' }
 if (-not (Test-Path (Join-Path $versionsRoot 'notes/identity.txt'))) { throw 'Unrelated directory was moved' }
 Pass 'new publication archives all older packages without overwriting archive collisions or moving unrelated folders'
 

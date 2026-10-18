@@ -58,7 +58,7 @@ Assert-FileExists $snapshot 'selected tooling build worker'
 if (-not (Get-Command -Name $snapshot).Parameters.ContainsKey('ToolingCommit')) {
     throw 'Selected tooling revision predates the two-repository build contract.'
 }
-$final = Join-Path $OutputRoot ('mib2q-carplay-rgi_' + $firmware + '_source_' + $short + '_tooling_' + $toolsShort + $(if ($Label) { '_' + $Label } else { '' }))
+$final = Join-Path $OutputRoot ('mib2q-carplay-enhanced_' + $firmware + '_source_' + $short + '_tooling_' + $toolsShort + $(if ($Label) { '_' + $Label } else { '' }))
 if ((Test-Path -LiteralPath $final) -and -not $ForceRebuild) { throw "Completed package already exists: $final" }
 $pending = Join-Path $OutputRoot ('.pending-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $pending | Out-Null

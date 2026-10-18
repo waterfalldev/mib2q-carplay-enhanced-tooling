@@ -1,7 +1,7 @@
 # Contribution branches in the application fork
 
 These branches belong to
-[`waterfalldev/mib2q-carplay-rgi-nonfpk`](https://github.com/waterfalldev/mib2q-carplay-rgi-nonfpk).
+[`waterfalldev/mib2q-carplay-enhanced-nonfpk`](https://github.com/waterfalldev/mib2q-carplay-enhanced-nonfpk).
 The `upstream/` prefix describes their intended contribution scope; it does not
 place them in Luka's repository. Pushing them to the fork does not open PRs or
 change upstream. No upstream PR has been opened for this extraction.

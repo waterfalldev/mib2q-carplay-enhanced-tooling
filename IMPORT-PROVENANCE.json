@@ -1,5 +1,5 @@
 {
-  "repository": "https://github.com/waterfalldev/mib2q-carplay-rgi-nonfpk",
+  "repository": "https://github.com/waterfalldev/mib2q-carplay-enhanced-nonfpk",
   "commit": "237ded9a3249dba395f7ac11968ad43440c6f31d",
   "paths": ["packaging/", "deploy/mib/", "docs/deploy/install.md"],
   "workspaceLauncher": "Build/Prepare-CarPlayRGI.ps1",
