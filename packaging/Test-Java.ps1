@@ -15,9 +15,11 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $JavaWork 'host-tests.tsv'
     $HostSuiteResults += [ordered]@{ name = $parts[0]; result = $parts[1] }
 }
 # A MOST MAP view revision adds exactly one suite, MostMapViewTest. A tree rebuilt on
-# upstream 8b3f2d1 also runs upstream's suites: 63 before those two.
+# upstream 8b3f2d1 also runs upstream's suites: 63 before those two, 62 once upstream
+# 2969ed8 dropped GatedCombiServiceInitStateTest.
 $mapViewSuites = [int](Test-MapViewSource -SourceRoot $WorkTree)
-$baseSuites = if (Test-UpstreamSource -SourceRoot $WorkTree) { 63 } else { 41 }
+$navInitSuites = [int](Test-Path -LiteralPath (Join-Path $WorkTree 'tests/GatedCombiServiceInitStateTest.java') -PathType Leaf)
+$baseSuites = if (Test-UpstreamSource -SourceRoot $WorkTree) { 62 + $navInitSuites } else { 41 }
 # The fork's cluster phone tab lock-state check adds GatedPhoneLockStateTest.
 $lockStateSuites = [int](Test-Path -LiteralPath (Join-Path $WorkTree 'tests/GatedPhoneLockStateTest.java') -PathType Leaf)
 $expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites + $lockStateSuites
