@@ -18,10 +18,15 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $JavaWork 'host-tests.tsv'
 # upstream 8b3f2d1 also runs upstream's suites: 63 before those two.
 $mapViewSuites = [int](Test-MapViewSource -SourceRoot $WorkTree)
 $baseSuites = if (Test-UpstreamSource -SourceRoot $WorkTree) { 63 } else { 41 }
-$expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites
+# The fork's cluster phone tab lock-state check adds GatedPhoneLockStateTest.
+$lockStateSuites = [int](Test-Path -LiteralPath (Join-Path $WorkTree 'tests/GatedPhoneLockStateTest.java') -PathType Leaf)
+$expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites + $lockStateSuites
 if ($HostSuiteResults.Count -ne $expectedCount) { throw "Expected $expectedCount Java suite results, got $($HostSuiteResults.Count)." }
 if (@($HostSuiteResults | Where-Object { $_.name -ceq 'MostMapViewTest' }).Count -ne $mapViewSuites) {
     throw "Expected $mapViewSuites MostMapViewTest results."
+}
+if (@($HostSuiteResults | Where-Object { $_.name -ceq 'GatedPhoneLockStateTest' }).Count -ne $lockStateSuites) {
+    throw "Expected $lockStateSuites GatedPhoneLockStateTest results."
 }
 $vcTextResult = @($HostSuiteResults | Where-Object { $_.name -eq 'VCTextScrollTest' })
 if ($vcTextResult.Count -ne 1) { throw 'VC resource runtime test result is missing.' }
