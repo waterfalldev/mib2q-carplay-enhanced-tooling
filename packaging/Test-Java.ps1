@@ -20,15 +20,17 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $JavaWork 'host-tests.tsv'
 $mapViewSuites = [int](Test-MapViewSource -SourceRoot $WorkTree)
 $navInitSuites = [int](Test-Path -LiteralPath (Join-Path $WorkTree 'tests/GatedCombiServiceInitStateTest.java') -PathType Leaf)
 $baseSuites = if (Test-UpstreamSource -SourceRoot $WorkTree) { 62 + $navInitSuites } else { 41 }
-# The fork's cluster phone tab lock-state check adds GatedPhoneLockStateTest.
-$lockStateSuites = [int](Test-Path -LiteralPath (Join-Path $WorkTree 'tests/GatedPhoneLockStateTest.java') -PathType Leaf)
-$expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites + $lockStateSuites
+# The fork's own single suites, each counted while its source exists and required to report once:
+# the cluster phone tab status fields and the native route stop on a phone navigation takeover.
+$forkSuites = @(@('GatedPhoneLockStateTest', 'NativeRouteStopTest') |
+    Where-Object { Test-Path -LiteralPath (Join-Path $WorkTree "tests/$_.java") -PathType Leaf })
+$expectedCount = $baseSuites + [int][bool]$frames + $mapViewSuites + $forkSuites.Count
 if ($HostSuiteResults.Count -ne $expectedCount) { throw "Expected $expectedCount Java suite results, got $($HostSuiteResults.Count)." }
 if (@($HostSuiteResults | Where-Object { $_.name -ceq 'MostMapViewTest' }).Count -ne $mapViewSuites) {
     throw "Expected $mapViewSuites MostMapViewTest results."
 }
-if (@($HostSuiteResults | Where-Object { $_.name -ceq 'GatedPhoneLockStateTest' }).Count -ne $lockStateSuites) {
-    throw "Expected $lockStateSuites GatedPhoneLockStateTest results."
+foreach ($suite in $forkSuites) {
+    if (@($HostSuiteResults | Where-Object { $_.name -ceq $suite }).Count -ne 1) { throw "Expected one $suite result." }
 }
 $vcTextResult = @($HostSuiteResults | Where-Object { $_.name -eq 'VCTextScrollTest' })
 if ($vcTextResult.Count -ne 1) { throw 'VC resource runtime test result is missing.' }
